@@ -12,6 +12,9 @@ from InquirerPy import inquirer
 from colorama import init as colorama_init, Fore, Style
 import pyperclip
 
+server_default_port = 22
+server_default_username = ""
+server_default_protocol = 1  # 0 = FTP, 1 = SFTP
 
 @dataclass
 class Server:
@@ -24,34 +27,84 @@ class Server:
     keyfile: Optional[str] = None
 
     @property
-    def display_label(self) -> str:
-        """Return the colored label for CLI display."""
-        label = f"{self.name} ({self.host}:{self.port})"
-        if self.protocol == 1:
-            return f"{Fore.GREEN}{label}{Style.RESET_ALL}"
-        return f"{Fore.RED}{label}{Style.RESET_ALL}"
+    def label(self) -> str:
+        """Return the nice label."""
+        return f"{self.name} ({self.host}:{self.port})"
 
-    def connect_ssh(self):
-        """Open a new terminal window and initiate SSH connection."""
-        cmd_parts = ['ssh']
+    @property
+    def command(self) -> str:
+        """Return the SSH command to connect to the server."""
+        cmd_parts = ["ssh"]
         if self.keyfile:
-            cmd_parts += ['-i', f'"{self.keyfile}"']
-        cmd_parts += [f"{self.user}@{self.host}", '-p', str(self.port)]
-        cmd = ' '.join(cmd_parts)
+            cmd_parts += ["-i", f'"{self.keyfile}"']
+        if self.user and self.host:
+            cmd_parts += [f"{self.user}@{self.host}", "-p", str(self.port)]
+        if self.password:
+            cmd_parts += ["-o", "PasswordAuthentication=yes"]
+
+        cmd = " ".join(cmd_parts)
+
+        return cmd
+
+    @property
+    def is_ftp(self) -> bool:
+        """Check if the server is FTP."""
+        return self.protocol == 0 or self.port == 21 or "ftp." in self.host
+
+    @property
+    def is_sftp(self) -> bool:
+        """Check if the server is SFTP."""
+        return self.protocol == 1 or self.port == 22 or "sftp." in self.host
+
+    @property
+    def can_connect(self) -> bool:
+        """Check if the server can be connected to."""
+        return self.host and self.user and ((not self.is_ftp) or (self.is_sftp))
+
+    def defaulting(self) -> List[str]:
+        """Set default values for missing attributes."""
+
+        global server_default_port, server_default_username, server_default_protocol
+
+        updated = []
+
+        if not self.port:
+            self.port = server_default_port
+            updated.append("port")
+
+        if not self.protocol:
+            self.protocol = server_default_protocol
+            updated.append("protocol")
+
+        if not self.user:
+            self.user = server_default_username
+            updated.append("user")
+
+        return updated
+
+    def open(self) -> None:
+        """Open a new terminal window and initiate SSH connection."""
+
+        if not self.can_connect:
+            return
 
         if self.password:
             pyperclip.copy(self.password)
-            print("Mot de passe copié dans le presse-papier.")
+            print(Fore.GREEN + "Password copied to clipboard." + Style.RESET_ALL)
 
-        system = platform.system()
-        if system == 'Windows':
-            subprocess.Popen(['start', 'cmd', '/k', cmd], shell=True)
+        if platform.system() == "Windows":
+            subprocess.Popen(["start", "cmd", "/k", self.command], shell=True)
+            print(f"Connecting to {self.label} with command '{self.command}'")
         else:
-            for emulator in (['gnome-terminal', '--'], ['xterm', '-e'], ['konsole', '-e']):
+            for emulator in (
+                ["gnome-terminal", "--"],
+                ["xterm", "-e"],
+                ["konsole", "-e"],
+            ):
                 if shutil.which(emulator[0]):
-                    subprocess.Popen(emulator + [cmd + '; exec $SHELL'])
+                    subprocess.Popen(emulator + [self.command + "; exec $SHELL"])
                     return
-            print(f"Lancez manuellement: {cmd}")
+            print(f"Launch manually: {self.command}")
 
 
 def parse_sitemanager(path: str) -> List[Server]:
@@ -63,62 +116,109 @@ def parse_sitemanager(path: str) -> List[Server]:
 
     tree = ET.parse(path)
     servers: List[Server] = []
-    for node in tree.findall('.//Server'):
-        name = node.findtext('Name') or 'Unnamed'
-        host = node.findtext('Host') or ''
-        port = int(node.findtext('Port') or 22)
-        protocol = int(node.findtext('Protocol') or 0)
-        user = node.findtext('User') or ''
+    for node in tree.findall(".//Server"):
+        name = node.findtext("Name") or "Unnamed"
+        host = node.findtext("Host") or ""
+        port = int(node.findtext("Port") or 22)
+        protocol = int(node.findtext("Protocol") or 0)
+        user = node.findtext("User") or ""
+        keyfile = node.findtext("Keyfile")
 
         password = None
-        pass_elem = node.find('Pass')
+        pass_elem = node.find("Pass")
         if pass_elem is not None and pass_elem.text:
             try:
-                password = base64.b64decode(pass_elem.text).decode('utf-8')
+                password = base64.b64decode(pass_elem.text).decode("utf-8")
             except Exception:
                 password = pass_elem.text
 
-        keyfile = node.findtext('Keyfile')
+        if not host or not user:
+            print(
+                Fore.YELLOW
+                + f"Skipping server '{name}' due to missing host or user."
+                + Style.RESET_ALL
+            )
+            continue
+
         servers.append(Server(name, host, port, protocol, user, password, keyfile))
     return servers
 
 
 def select_server(servers: List[Server]) -> Server:
     """Prompt the user to select a server via a fuzzy search menu."""
-    choices = [{'name': srv.display_label, 'value': srv} for srv in servers]
+    choices = [{"name": srv.label, "value": srv} for srv in servers]
     selected = inquirer.fuzzy(
-        message="Sélectionnez un site:",
-        choices=choices,
-        max_height="70%"
+        message="Select a server:", choices=choices, max_height="100%"
     ).execute()
     return selected
 
 
 def get_sitemanager_path() -> str:
     """Determine FileZilla sitemanager.xml path for current OS."""
-    if platform.system() == 'Windows':
+    if platform.system() == "Windows":
         return os.path.expandvars(r"%APPDATA%\FileZilla\sitemanager.xml")
-    return os.path.expanduser('~/.config/filezilla/sitemanager.xml')
+    return os.path.expanduser("~/.config/filezilla/sitemanager.xml")
 
 
-def main():
-    colorama_init(autoreset=True)
+def main() -> None:
+    colorama_init(autoreset=True, strip=False, convert=True)
+
+    if not shutil.which("ssh"):
+        print(
+            Fore.RED
+            + "SSH client is not installed or not found in PATH."
+            + Style.RESET_ALL
+        )
+        return
 
     sitemanager_path = get_sitemanager_path()
-    try:
-        servers = parse_sitemanager(sitemanager_path)
-    except FileNotFoundError as e:
-        print(e)
-        sys.exit(1)
+
+    if not os.path.exists(sitemanager_path):
+        print(
+            Fore.RED
+            + "FileZilla sitemanager.xml not found. Please ensure FileZilla is installed and has saved at least one site."
+            + Style.RESET_ALL
+        )
+        return
+
+    servers = parse_sitemanager(sitemanager_path)
+
+    if not servers:
+        print(
+            Fore.RED
+            + "No valid server found in the FileZilla site manager."
+            + Style.RESET_ALL
+        )
+        return
 
     server = select_server(servers)
 
-    if server.protocol != 1:
-        print(Fore.YELLOW + "Sélection FTP détectée. Connexion SSH non disponible pour ce protocole." + Style.RESET_ALL)
-        sys.exit(0)
+    defaults = server.defaulting()
+    if defaults:
+        print(
+            Fore.YELLOW
+            + f"Defaulting missing attributes: {', '.join(defaults)}"
+            + Style.RESET_ALL
+        )
 
-    server.connect_ssh()
+    if server.is_ftp:
+        print(
+            Fore.RED
+            + "Cannot connect to FTP servers. Please select an SFTP server."
+            + Style.RESET_ALL
+        )
+        return
+
+    if not server.can_connect:
+        print(
+            Fore.RED
+            + "Cannot connect to the server with the provided details."
+            + Style.RESET_ALL
+        )
+        return
+
+    server.open()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
