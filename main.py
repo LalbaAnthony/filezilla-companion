@@ -16,6 +16,7 @@ server_default_port = 22
 server_default_username = ""
 server_default_protocol = 1  # 0 = FTP, 1 = SFTP
 
+
 @dataclass
 class Server:
     name: str
@@ -29,7 +30,9 @@ class Server:
     @property
     def fullhost(self) -> str:
         """Return the full host string with port if necessary."""
-        assert self.host and self.port, "Cannot generate fullhost without host and port."
+        assert (
+            self.host and self.port
+        ), "Cannot generate fullhost without host and port."
         return f"{self.host}:{self.port}"
 
     @property
@@ -102,9 +105,10 @@ class Server:
             pyperclip.copy(self.password)
             print(Fore.GREEN + "Password copied to clipboard." + Style.RESET_ALL)
 
+        print(Fore.GREEN + f"Connecting to {self.label}" + Style.RESET_ALL)
+
         if platform.system() == "Windows":
             subprocess.Popen(["start", "cmd", "/k", self.command], shell=True)
-            print(f"Connecting to {self.label} with command '{self.command}'")
         else:
             for emulator in (
                 ["gnome-terminal", "--"],
@@ -114,7 +118,13 @@ class Server:
                 if shutil.which(emulator[0]):
                     subprocess.Popen(emulator + [self.command + "; exec $SHELL"])
                     return
-            print(f"Launch manually: {self.command}")
+            print(
+                Fore.YELLOW
+                + "No suitable terminal emulator found. Please open a terminal and run the command manually."
+                + Style.RESET_ALL
+            )
+        
+        print(f"Command: {self.command}")
 
 
 def parse_sitemanager(path: str) -> List[Server]:
