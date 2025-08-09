@@ -117,12 +117,6 @@ class Server:
             ):
                 if shutil.which(emulator[0]):
                     subprocess.Popen(emulator + [self.command + "; exec $SHELL"])
-                    return
-            print(
-                Fore.YELLOW
-                + "No suitable terminal emulator found. Please open a terminal and run the command manually."
-                + Style.RESET_ALL
-            )
         
         print(f"Command: {self.command}")
 
