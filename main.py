@@ -27,13 +27,23 @@ class Server:
     keyfile: Optional[str] = None
 
     @property
+    def fullhost(self) -> str:
+        """Return the full host string with port if necessary."""
+        assert self.host and self.port, "Cannot generate fullhost without host and port."
+        return f"{self.host}:{self.port}"
+
+    @property
     def label(self) -> str:
         """Return the nice label."""
-        return f"{self.name} ({self.host}:{self.port})"
+        assert self.fullhost, "Cannot generate label without fullhost."
+        if self.name:
+            return f"{self.name} ({self.fullhost})"
+        return f"{self.fullhost}"
 
     @property
     def command(self) -> str:
         """Return the SSH command to connect to the server."""
+        assert self.can_connect, "Cannot generate command without host and user."
         cmd_parts = ["ssh"]
         if self.keyfile:
             cmd_parts += ["-i", f'"{self.keyfile}"']
@@ -49,11 +59,13 @@ class Server:
     @property
     def is_ftp(self) -> bool:
         """Check if the server is FTP."""
+        assert self.protocol in (0, 1), "Invalid protocol value"
         return self.protocol == 0 or self.port == 21 or "ftp." in self.host
 
     @property
     def is_sftp(self) -> bool:
         """Check if the server is SFTP."""
+        assert self.protocol in (0, 1), "Invalid protocol value"
         return self.protocol == 1 or self.port == 22 or "sftp." in self.host
 
     @property
@@ -84,9 +96,7 @@ class Server:
 
     def open(self) -> None:
         """Open a new terminal window and initiate SSH connection."""
-
-        if not self.can_connect:
-            return
+        assert self.can_connect, "Cannot connect to server without host and user."
 
         if self.password:
             pyperclip.copy(self.password)
