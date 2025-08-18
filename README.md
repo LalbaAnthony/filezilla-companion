@@ -8,7 +8,9 @@ FileZilla Companion is a smoll tool that enhances the user experience of FileZil
 
 2. Install pip if not already installed:
     ```bash
-    py -m ensurepip --upgrade
+    python -m ensurepip --upgrade --user
+	# OR
+	python -m pip install --upgrade pip
     ```
 
 3. Install the required packages using pip:
