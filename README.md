@@ -16,6 +16,8 @@ FileZilla Companion is a smoll tool that enhances the user experience of FileZil
 3. Install the required packages using pip:
     ```bash
     pip install -r requirements.txt
+    # OR
+    py -m pip install inquirer InquirerPy colorama pyperclip
     ```
 
 ## Usage
