@@ -36,12 +36,20 @@ class Server:
         return f"{self.host}:{self.port}"
 
     @property
+    def fullname(self) -> str:
+        """Return the full name string with user if necessary."""
+        assert (
+            self.host and self.user
+        ), "Cannot generate fullname without host and user."
+        return f"{self.user}@{self.host}"
+
+    @property
     def label(self) -> str:
         """Return the nice label."""
-        assert self.fullhost, "Cannot generate label without fullhost."
+        assert self.fullname, "Cannot generate label without fullname."
         if self.name:
-            return f"{self.name} ({self.fullhost})"
-        return f"{self.fullhost}"
+            return f"{self.name} ({self.fullname})"
+        return f"{self.fullname}"
 
     @property
     def command(self) -> str:
