@@ -1,2 +1,5 @@
-- [ ] Merge with `linux_download_remote_bdd_with_ssh.py`
+- [ ] Merge with `agora_switch_vhost_dev.py` then delete its script
+- [ ] Merge with `agora_switch_node_dev.py` then delete its script
+- [ ] Merge with `linux_download_remote_bdd_with_ssh.py` then delete its script
+- [ ] Add an action that `sudo update-alternatives --config php`
 - [ ] Add option to modify and add site in sitemanager ?
