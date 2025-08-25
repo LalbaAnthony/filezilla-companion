@@ -1,2 +1,2 @@
-- [ ] Merge with Merge avec linux_download_remote_bdd_with_ssh
+- [ ] Merge with `linux_download_remote_bdd_with_ssh.py`
 - [ ] Add option to modify and add site in sitemanager ?
