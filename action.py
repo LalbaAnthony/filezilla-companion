@@ -31,5 +31,5 @@ class Action:
             else:
                 formatted = f"{server.command} {cmd}"
 
-            print(Fore.WHITE + f"Running: " + Fore.GREEN + formatted + Style.RESET_ALL)
+            print(Fore.WHITE + f"Running: " + Fore.YELLOW + formatted + Style.RESET_ALL)
             subprocess.run(formatted, shell=True)
