@@ -172,13 +172,22 @@ def select_server(servers: List[Server]) -> Server:
     ).execute()
     return selected
 
+def select_action() -> str:
+    """Prompt user to choose an action for the selected server."""
+    action = inquirer.select(
+        message="Choose an action:",
+        choices=[
+            {"name": "Connect to SSH", "value": "ssh"},
+            {"name": "Cancel", "value": "cancel"},
+        ],
+    ).execute()
+    return action
 
 def get_sitemanager_path() -> str:
     """Determine FileZilla sitemanager.xml path for current OS."""
     if platform.system() == "Windows":
         return os.path.expandvars(r"%APPDATA%\FileZilla\sitemanager.xml")
     return os.path.expanduser("~/.config/filezilla/sitemanager.xml")
-
 
 def main() -> None:
     colorama_init(autoreset=True, strip=False, convert=True)
@@ -236,9 +245,13 @@ def main() -> None:
             + Style.RESET_ALL
         )
         return
+    
+    action = select_action()
 
-    server.open()
-
+    if action == "ssh":
+        server.open()
+    elif action == "cancel":
+        print(Fore.YELLOW + "Operation cancelled." + Style.RESET_ALL)
 
 if __name__ == "__main__":
     main()
