@@ -1,6 +1,6 @@
-- [ ] Faire en sorte de pouvoir ouvrir une action interctive ou pas (reste dans le script sans coonection SSH ou nouvelle popup avec connexion SSH) (utile pour `sudo update-alternatives --config php`)
-- [ ] Faire en sorte de pouvoir passer des arguments aux actions (utile pour le merge avec `agora_switch_vhost_dev.py`)
+- [ ] Faire en sorte de pouvoir passer des arguments aux actions
+- [ ] Faire en sorte de pouvoir ouvrir une action interctive ou pas (reste dans le script sans connexion SSH ou nouvelle popup avec connexion SSH) (utile pour `sudo update-alternatives --config php`)
 - [ ] Add an action that `sudo update-alternatives --config php`
-- [ ] Merge with `agora_switch_vhost_dev.py` then delete its script
-- [ ] Merge with `linux_download_remote_bdd_with_ssh.py` then delete its script
+- [ ] Merge with `agora_switch_vhost_dev.py`, with its TODOs, then delete its script
+- [ ] Merge with `linux_download_remote_bdd_with_ssh.py`, with its TODOs, then delete its script
 - [ ] Add option to modify and add site in sitemanager ?

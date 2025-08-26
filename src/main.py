@@ -37,15 +37,6 @@ actions = [
         name="Switch to latest Node.js version",
         commands=["npm install -g n", "n latest"],
     ),
-    Action(
-        key="ssh_apache2_vhost_nuxt",
-        name="Switch to Nuxt.js vhost",
-        commands=[
-            "sudo a2dissite *.conf",
-            "sudo a2ensite dev-nuxt.conf",
-            "sudo systemctl restart apache2",
-        ],
-    ),
 ]
 
 
