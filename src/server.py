@@ -8,6 +8,7 @@ from InquirerPy import inquirer
 from colorama import init as colorama_init, Fore, Style
 import pyperclip
 
+
 @dataclass
 class Server:
     name: str
@@ -104,7 +105,11 @@ class Server:
             pyperclip.copy(self.password)
             print(Fore.GREEN + "Password copied to clipboard." + Style.RESET_ALL)
 
-        print(Fore.WHITE + f"Connecting to {self.label} using `{self.command}` ..." + Style.RESET_ALL)
+        print(
+            Fore.WHITE
+            + f"Connecting to {self.label} using `{self.command}` ..."
+            + Style.RESET_ALL
+        )
 
         if platform.system() == "Windows":
             subprocess.Popen(["start", "cmd", "/k", self.command], shell=True)
@@ -116,4 +121,3 @@ class Server:
             ):
                 if shutil.which(emulator[0]):
                     subprocess.Popen(emulator + [self.command + "; exec $SHELL"])
-

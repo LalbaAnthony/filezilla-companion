@@ -19,17 +19,10 @@ class Action:
             server.open()
             return
 
-        for cmd in self.commands:
-            # prepend ssh if not already part of command
-            if "{ssh}" in cmd:
-                formatted = cmd.format(
-                    ssh=server.command,
-                    user=server.user,
-                    host=server.host,
-                    port=server.port,
-                )
-            else:
-                formatted = f"{server.command} {cmd}"
+        if self.commands:
+            # join with && so it stops on first error
+            joined = " && ".join(self.commands)
+            formatted = f'{server.command} "{joined}"'
 
-            print(Fore.WHITE + f"Running: " + Fore.YELLOW + formatted + Style.RESET_ALL)
+            print(Fore.WHITE + "Running: " + Fore.YELLOW + formatted + Style.RESET_ALL)
             subprocess.run(formatted, shell=True)

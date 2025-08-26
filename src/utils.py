@@ -11,6 +11,7 @@ from colorama import init as colorama_init, Fore, Style
 from server import Server
 from action import Action
 
+
 def parse_sitemanager(path: str) -> List[Server]:
     """
     Parse FileZilla sitemanager.xml into Server instances.
@@ -56,9 +57,18 @@ def select_server(servers: List[Server]) -> Server:
     ).execute()
     return selected
 
+
 def select_action(actions: List[Action]) -> Action:
     choices = [{"name": a.name, "value": a} for a in actions]
     return inquirer.select(message="Choose action:", choices=choices).execute()
+
+def select_actions(actions: List[Action]) -> List[Action]:
+    choices = [{"name": a.name, "value": a} for a in actions]
+    return inquirer.checkbox(
+        message="Choose one or more actions (use `space` to select):",
+        choices=choices,
+        validate=lambda result: len(result) > 0,
+    ).execute()
 
 def get_sitemanager_path() -> str:
     """Determine FileZilla sitemanager.xml path for current OS."""

@@ -1,52 +1,51 @@
+from http import server
 import os
-import sys
-import base64
-import platform
-import subprocess
 import shutil
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
-from typing import List, Callable, Optional
 
-from InquirerPy import inquirer
 from colorama import init as colorama_init, Fore, Style
-import pyperclip
 
-from server import Server
 from action import Action
-from utils import parse_sitemanager, select_server, select_action, get_sitemanager_path
+from utils import (
+    parse_sitemanager,
+    select_server,
+    select_actions,
+    get_sitemanager_path,
+)
 
 server_default_port = 22
 server_default_username = ""
 server_default_protocol = 1  # 0 = FTP, 1 = SFTP
 
 actions = [
+    Action(key="ssh", name="Connect to SSH", interactive=True),
     Action(
-        key="ssh",
-        name="Connect to SSH",
-        interactive=True
+        key="ssh_node_version_18",
+        name="Switch to Node.js version 18",
+        commands=["npm install -g n", "n 18"],
     ),
     Action(
-        key="ssh_cmd",
-        name="Connect to SSH + run ls -la",
-        commands=[
-            "ls -la",
-            "pwd"
-        ]
+        key="ssh_node_version_22",
+        name="Switch to Node.js version 22",
+        commands=["npm install -g n", "n 22"],
     ),
     Action(
-        key="switch_node_version",
+        key="ssh_node_version_latest",
         name="Switch to latest Node.js version",
-        commands=[
-            "command -v n >/dev/null 2>&1 || npm install -g n",
-            "sudo n latest"
-        ]
+        commands=["npm install -g n", "n latest"],
     ),
     Action(
-        key="cancel",
-        name="Cancel",
+        key="ssh_apache2_vhost_nuxt",
+        name="Switch to Nuxt.js vhost",
+        commands=[
+            "sudo a2dissite *.conf",
+            "sudo a2ensite dev-nuxt.conf",
+            "sudo systemctl restart apache2",
+        ],
     ),
 ]
+
 
 def main() -> None:
     colorama_init(autoreset=True, strip=False, convert=True)
@@ -104,14 +103,13 @@ def main() -> None:
             + Style.RESET_ALL
         )
         return
-    
-    action = select_action(actions)
 
-    if action == "cancel":
-        print(Fore.YELLOW + "Operation cancelled." + Style.RESET_ALL)
-    else:
+    selected_actions = select_actions(actions)
+
+    for action in selected_actions:
         action.run(server)
+
+
 
 if __name__ == "__main__":
     main()
-
