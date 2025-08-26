@@ -1,14 +1,9 @@
-import platform
-import subprocess
-import shutil
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import List, Optional
 
-from InquirerPy import inquirer
-from colorama import init as colorama_init, Fore, Style
-import pyperclip
-
-
+server_default_port = 22
+server_default_username = ""
+server_default_protocol = 1  # 0 = FTP, 1 = SFTP
 @dataclass
 class Server:
     name: str
@@ -96,28 +91,3 @@ class Server:
             updated.append("user")
 
         return updated
-
-    def open(self) -> None:
-        """Open a new terminal window and initiate SSH connection."""
-        assert self.can_connect, "Cannot connect to server without host and user."
-
-        if self.password:
-            pyperclip.copy(self.password)
-            print(Fore.GREEN + "Password copied to clipboard." + Style.RESET_ALL)
-
-        print(
-            Fore.WHITE
-            + f"Connecting to {self.label} using `{self.command}` ..."
-            + Style.RESET_ALL
-        )
-
-        if platform.system() == "Windows":
-            subprocess.Popen(["start", "cmd", "/k", self.command], shell=True)
-        else:
-            for emulator in (
-                ["gnome-terminal", "--"],
-                ["xterm", "-e"],
-                ["konsole", "-e"],
-            ):
-                if shutil.which(emulator[0]):
-                    subprocess.Popen(emulator + [self.command + "; exec $SHELL"])

@@ -1,11 +1,7 @@
-from http import server
 import os
 import shutil
 import xml.etree.ElementTree as ET
-from dataclasses import dataclass, field
-
 from colorama import init as colorama_init, Fore, Style
-
 from action import Action
 from utils import (
     parse_sitemanager,
@@ -14,12 +10,18 @@ from utils import (
     get_sitemanager_path,
 )
 
-server_default_port = 22
-server_default_username = ""
-server_default_protocol = 1  # 0 = FTP, 1 = SFTP
-
 actions = [
-    Action(key="ssh", name="Connect to SSH", interactive=True),
+    Action(
+        key="ssh",
+        name="Connect to SSH",
+        interactive=True,
+    ),
+    Action(
+        key="ssh_php_version_pick",
+        name="Pick PHP Version",
+        commands=["sudo update-alternatives --config php"],
+        interactive=True,
+    ),
     Action(
         key="ssh_node_version_18",
         name="Switch to Node.js version 18",
@@ -48,6 +50,8 @@ actions = [
 
 
 def main() -> None:
+    global actions
+
     colorama_init(autoreset=True, strip=False, convert=True)
 
     if not shutil.which("ssh"):
@@ -108,7 +112,6 @@ def main() -> None:
 
     for action in selected_actions:
         action.run(server)
-
 
 
 if __name__ == "__main__":

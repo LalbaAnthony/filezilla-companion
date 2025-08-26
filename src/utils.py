@@ -2,12 +2,9 @@ import os
 import base64
 import platform
 import xml.etree.ElementTree as ET
-from dataclasses import dataclass, field
 from typing import List
-
 from InquirerPy import inquirer
-from colorama import init as colorama_init, Fore, Style
-
+from colorama import Fore, Style
 from server import Server
 from action import Action
 
@@ -58,17 +55,14 @@ def select_server(servers: List[Server]) -> Server:
     return selected
 
 
-def select_action(actions: List[Action]) -> Action:
-    choices = [{"name": a.name, "value": a} for a in actions]
-    return inquirer.select(message="Choose action:", choices=choices).execute()
-
 def select_actions(actions: List[Action]) -> List[Action]:
     choices = [{"name": a.name, "value": a} for a in actions]
     return inquirer.checkbox(
-        message="Choose one or more actions (use `space` to select):",
+        message="Choose one or more actions (use `space` to select and `enter` to confirm):",
         choices=choices,
         validate=lambda result: len(result) > 0,
     ).execute()
+
 
 def get_sitemanager_path() -> str:
     """Determine FileZilla sitemanager.xml path for current OS."""
