@@ -1,3 +1,4 @@
+- [ ] Faire fonction pour détécter si le serveur est local (commence par 192.168.*.*) + mettre un warning si l'action est potentiellement dangereuse (ajouter un boolean dans la classe action) ET que le serveur n'est pas local (donc peut être de prod)
 - [ ] Faire en sorte de pouvoir passer des arguments aux actions
 - [ ] Faire en sorte d'avoir une commande prérempli lors de la connexion SSH (si possible)
 - [ ] Merge with `agora_switch_vhost_dev.py`, with its TODOs, then delete its script
