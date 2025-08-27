@@ -86,14 +86,5 @@
             "npm install -g n",
             "n 22"
         ]
-    },
-    {
-        "key": "ssh_node_version_latest",
-        "name": "Switch to latest Node.js version",
-        "interactive": false,
-        "commands": [
-            "npm install -g n",
-            "n latest"
-        ]
     }
 ]
