@@ -17,10 +17,34 @@ actions = [
         interactive=True,
     ),
     Action(
-        key="ssh_php_version_pick",
-        name="Pick PHP Version",
-        commands=["sudo update-alternatives --config php"],
-        interactive=True,
+        key="ssh_php_version_56",
+        name="Switch to PHP version 5.6",
+        commands=["sudo update-alternatives --set php /usr/bin/php5.6", "sudo systemctl restart apache2"],
+    ),
+    Action(
+        key="ssh_php_version_70",
+        name="Switch to PHP version 7.0",
+        commands=["sudo update-alternatives --set php /usr/bin/php7.0", "sudo systemctl restart apache2"],
+    ),
+    Action(
+        key="ssh_php_version_74",
+        name="Switch to PHP version 7.4",
+        commands=["sudo update-alternatives --set php /usr/bin/php7.4", "sudo systemctl restart apache2"],
+    ),
+    Action(
+        key="ssh_php_version_81",
+        name="Switch to PHP version 8.1",
+        commands=["sudo update-alternatives --set php /usr/bin/php8.1", "sudo systemctl restart apache2"],
+    ),
+    Action(
+        key="ssh_php_version_83",
+        name="Switch to PHP version 8.3",
+        commands=["sudo update-alternatives --set php /usr/bin/php8.3", "sudo systemctl restart apache2"],
+    ),
+    Action(
+        key="ssh_php_version_84",
+        name="Switch to PHP version 8.4",
+        commands=["sudo update-alternatives --set php /usr/bin/php8.4", "sudo systemctl restart apache2"],
     ),
     Action(
         key="ssh_node_version_18",
