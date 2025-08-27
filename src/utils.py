@@ -1,3 +1,4 @@
+import json
 import os
 import base64
 import platform
@@ -7,7 +8,6 @@ from InquirerPy import inquirer
 from colorama import Fore, Style
 from server import Server
 from action import Action
-
 
 def parse_sitemanager(path: str) -> List[Server]:
     """
@@ -54,6 +54,10 @@ def select_server(servers: List[Server]) -> Server:
     ).execute()
     return selected
 
+def load_actions(path: str) -> list[Action]:
+    with open(path, "r", encoding="utf-8") as f:
+        raw = json.load(f)
+    return [Action(**item) for item in raw]
 
 def select_actions(actions: List[Action]) -> List[Action]:
     choices = [{"name": a.name, "value": a} for a in actions]

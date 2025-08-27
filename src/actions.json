@@ -1,0 +1,99 @@
+[
+    {
+        "key": "ssh",
+        "name": "Connect to SSH",
+        "interactive": true,
+        "commands": []
+    },
+    {
+        "key": "ssh_php_version_56",
+        "name": "Switch to PHP version 5.6",
+        "interactive": false,
+        "commands": [
+            "sudo update-alternatives --set php /usr/bin/php5.6",
+            "sudo systemctl restart apache2"
+        ]
+    },
+    {
+        "key": "ssh_php_version_70",
+        "name": "Switch to PHP version 7.0",
+        "interactive": false,
+        "commands": [
+            "sudo update-alternatives --set php /usr/bin/php7.0",
+            "sudo systemctl restart apache2"
+        ]
+    },
+    {
+        "key": "ssh_php_version_74",
+        "name": "Switch to PHP version 7.4",
+        "interactive": false,
+        "commands": [
+            "sudo update-alternatives --set php /usr/bin/php7.4",
+            "sudo systemctl restart apache2"
+        ]
+    },
+    {
+        "key": "ssh_php_version_81",
+        "name": "Switch to PHP version 8.1",
+        "interactive": false,
+        "commands": [
+            "sudo update-alternatives --set php /usr/bin/php8.1",
+            "sudo systemctl restart apache2"
+        ]
+    },
+    {
+        "key": "ssh_php_version_83",
+        "name": "Switch to PHP version 8.3",
+        "interactive": false,
+        "commands": [
+            "sudo update-alternatives --set php /usr/bin/php8.3",
+            "sudo systemctl restart apache2"
+        ]
+    },
+    {
+        "key": "ssh_php_version_84",
+        "name": "Switch to PHP version 8.4",
+        "interactive": false,
+        "commands": [
+            "sudo update-alternatives --set php /usr/bin/php8.4",
+            "sudo systemctl restart apache2"
+        ]
+    },
+    {
+        "key": "ssh_apache_vhost",
+        "name": "Switch to virtual host dev-nuxt",
+        "interactive": false,
+        "commands": [
+            "sudo a2dissite *.conf",
+            "sudo a2ensite dev-nuxt.conf",
+            "sudo systemctl restart apache2"
+        ]
+    },
+    {
+        "key": "ssh_node_version_18",
+        "name": "Switch to Node.js version 18",
+        "interactive": false,
+        "commands": [
+            "npm install -g n",
+            "n 18"
+        ]
+    },
+    {
+        "key": "ssh_node_version_22",
+        "name": "Switch to Node.js version 22",
+        "interactive": false,
+        "commands": [
+            "npm install -g n",
+            "n 22"
+        ]
+    },
+    {
+        "key": "ssh_node_version_latest",
+        "name": "Switch to latest Node.js version",
+        "interactive": false,
+        "commands": [
+            "npm install -g n",
+            "n latest"
+        ]
+    }
+]
