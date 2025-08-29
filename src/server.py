@@ -61,6 +61,12 @@ class Server:
         return self.protocol == 0 or self.port == 21 or "ftp." in self.host
 
     @property
+    def is_local(self) -> bool:
+        """Check if the server is local. Any server with 192.168.x.x is considered local."""
+        assert self.host, "Invalid host value"
+        return self.host.startswith("192.168.")
+
+    @property
     def is_sftp(self) -> bool:
         """Check if the server is SFTP."""
         assert self.protocol in (0, 1), "Invalid protocol value"

@@ -68,6 +68,16 @@ def main() -> None:
         )
         return
 
+    if not server.is_local:
+        confirm = input(
+            Fore.YELLOW
+            + "Warning: You are connecting to a non-local server. Do you want to continue? (Y/n) "
+            + Style.RESET_ALL
+        )
+        if confirm == "" or confirm.lower() == "Y" or confirm.lower() == "y" or confirm.lower() == "yes":
+            print(Fore.RED + "Operation cancelled." + Style.RESET_ALL)
+            return
+
     actions = load_actions("actions.json")
     selected_actions = select_actions(actions)
 
