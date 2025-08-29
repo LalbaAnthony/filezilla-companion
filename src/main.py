@@ -11,6 +11,7 @@ from utils import (
     get_sitemanager_path,
 )
 
+
 def main() -> None:
     colorama_init(autoreset=True, strip=False, convert=True)
 
@@ -74,7 +75,12 @@ def main() -> None:
             + "Warning: You are connecting to a non-local server. Do you want to continue? (Y/n) "
             + Style.RESET_ALL
         )
-        if confirm == "" or confirm.lower() == "Y" or confirm.lower() == "y" or confirm.lower() == "yes":
+        if not (
+            confirm == ""
+            or confirm.lower() == "Y"
+            or confirm.lower() == "y"
+            or confirm.lower() == "yes"
+        ):
             print(Fore.RED + "Operation cancelled." + Style.RESET_ALL)
             return
 
