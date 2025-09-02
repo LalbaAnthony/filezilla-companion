@@ -2,4 +2,4 @@
 - [ ] Faire en sorte d'avoir une commande prérempli lors de la connexion SSH (si possible)
 - [ ] Merge with `agora_switch_vhost_dev.py`, with its TODOs, then delete the og script
 - [ ] Merge with `linux_download_remote_bdd_with_ssh.py`, with its TODOs, then delete the og script
-- [ ] Add option to modify and add site in sitemanager ?
+- [ ] Add option to modify and add site in sitemanager.xml ?
