@@ -46,7 +46,9 @@ class Server:
         if self.keyfile:
             cmd_parts += ["-i", f'"{self.keyfile}"']
         if self.user and self.host:
-            cmd_parts += [f"{self.user}@{self.host}", "-p", str(self.port)]
+            cmd_parts += [f"{self.user}@{self.host}"]
+        if self.port and self.port:
+            cmd_parts += ["-p", str(self.port)]
         if self.password:
             cmd_parts += ["-o", "PasswordAuthentication=yes"]
 
