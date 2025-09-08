@@ -72,7 +72,7 @@ def main() -> None:
     if not server.is_local:
         confirm = input(
             Fore.YELLOW
-            + "Warning: You are connecting to a non-local server. Do you want to continue? (Y/n) "
+            + "Warning: This server is likely to be a production server. Do you want to continue? (Y/n) "
             + Style.RESET_ALL
         )
         if not (
