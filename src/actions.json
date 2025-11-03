@@ -89,7 +89,7 @@
     },
     {
         "key": "ssh_node_version_18",
-        "name": "Switch to Node.js version 18",
+        "name": "Switch to NODE version 18",
         "interactive": false,
         "commands": [
             "npm install -g n",
@@ -98,7 +98,7 @@
     },
     {
         "key": "ssh_node_version_22",
-        "name": "Switch to Node.js version 22",
+        "name": "Switch to NODE version 22",
         "interactive": false,
         "commands": [
             "npm install -g n",
