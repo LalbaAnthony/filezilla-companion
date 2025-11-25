@@ -79,11 +79,121 @@
     },
     {
         "key": "ssh_apache_vhost",
-        "name": "Switch to virtual host dev-nuxt",
+        "name": "Switch to virtual host '000-default.conf'",
+        "interactive": false,
+        "commands": [
+            "sudo a2dissite *.conf",
+            "sudo a2ensite 000-default.conf",
+            "sudo systemctl restart apache2"
+        ]
+    },
+    {
+        "key": "ssh_apache_vhost",
+        "name": "Switch to virtual host 'default-ssl.conf'",
+        "interactive": false,
+        "commands": [
+            "sudo a2dissite *.conf",
+            "sudo a2ensite default-ssl.conf",
+            "sudo systemctl restart apache2"
+        ]
+    },
+    {
+        "key": "ssh_apache_vhost",
+        "name": "Switch to virtual host 'dev-extranet.conf'",
+        "interactive": false,
+        "commands": [
+            "sudo a2dissite *.conf",
+            "sudo a2ensite dev-extranet.conf",
+            "sudo systemctl restart apache2"
+        ]
+    },
+    {
+        "key": "ssh_apache_vhost",
+        "name": "Switch to virtual host 'dev-nuxt.conf'",
         "interactive": false,
         "commands": [
             "sudo a2dissite *.conf",
             "sudo a2ensite dev-nuxt.conf",
+            "sudo systemctl restart apache2"
+        ]
+    },
+    {
+        "key": "ssh_apache_vhost",
+        "name": "Switch to virtual host 'dev-php5.6.conf'",
+        "interactive": false,
+        "commands": [
+            "sudo a2dissite *.conf",
+            "sudo a2ensite dev-php5.6.conf",
+            "sudo systemctl restart apache2"
+        ]
+    },
+    {
+        "key": "ssh_apache_vhost",
+        "name": "Switch to virtual host 'dev-php7.0.conf'",
+        "interactive": false,
+        "commands": [
+            "sudo a2dissite *.conf",
+            "sudo a2ensite dev-php7.0.conf",
+            "sudo systemctl restart apache2"
+        ]
+    },
+    {
+        "key": "ssh_apache_vhost",
+        "name": "Switch to virtual host 'dev-php7.4.conf'",
+        "interactive": false,
+        "commands": [
+            "sudo a2dissite *.conf",
+            "sudo a2ensite dev-php7.4.conf",
+            "sudo systemctl restart apache2"
+        ]
+    },
+    {
+        "key": "ssh_apache_vhost",
+        "name": "Switch to virtual host 'dev-php8.3.conf'",
+        "interactive": false,
+        "commands": [
+            "sudo a2dissite *.conf",
+            "sudo a2ensite dev-php8.3.conf",
+            "sudo systemctl restart apache2"
+        ]
+    },
+    {
+        "key": "ssh_apache_vhost",
+        "name": "Switch to virtual host 'dev-php8.4.conf'",
+        "interactive": false,
+        "commands": [
+            "sudo a2dissite *.conf",
+            "sudo a2ensite dev-php8.4.conf",
+            "sudo systemctl restart apache2"
+        ]
+    },
+    {
+        "key": "ssh_apache_vhost",
+        "name": "Switch to virtual host 'dev-quasar.conf'",
+        "interactive": false,
+        "commands": [
+            "sudo a2dissite *.conf",
+            "sudo a2ensite dev-quasar.conf",
+            "sudo systemctl restart apache2"
+        ]
+    },
+    {
+        "key": "ssh_apache_vhost",
+        "name": "Switch to virtual host 'dev-quasar-noback.conf'",
+        "interactive": false,
+        "commands": [
+            "sudo a2dissite *.conf",
+            "sudo a2ensite dev-quasar-noback.conf",
+            "sudo systemctl restart apache2"
+        ]
+    },
+    {
+        "key": "ssh_apache_vhost",
+        "name": "Switch to virtual host 'dev-temporary-ouranos.conf'",
+        "interactive": false,
+        "commands": [
+            "sudo a2dissite *.conf",
+            "sudo a2ensite dev-temporary-ouranos.conf",
             "sudo systemctl restart apache2"
         ]
     },
