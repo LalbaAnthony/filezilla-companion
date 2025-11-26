@@ -77,6 +77,24 @@
             "sudo systemctl restart apache2"
         ]
     },
+        {
+        "key": "ssh_node_version_18",
+        "name": "Switch to NODE version 18",
+        "interactive": false,
+        "commands": [
+            "npm install -g n",
+            "n 18"
+        ]
+    },
+    {
+        "key": "ssh_node_version_22",
+        "name": "Switch to NODE version 22",
+        "interactive": false,
+        "commands": [
+            "npm install -g n",
+            "n 22"
+        ]
+    },
     {
         "key": "ssh_apache_vhost",
         "name": "Switch to virtual host '000-default.conf'",
@@ -195,24 +213,6 @@
             "sudo a2dissite *.conf",
             "sudo a2ensite dev-temporary-ouranos.conf",
             "sudo systemctl restart apache2"
-        ]
-    },
-    {
-        "key": "ssh_node_version_18",
-        "name": "Switch to NODE version 18",
-        "interactive": false,
-        "commands": [
-            "npm install -g n",
-            "n 18"
-        ]
-    },
-    {
-        "key": "ssh_node_version_22",
-        "name": "Switch to NODE version 22",
-        "interactive": false,
-        "commands": [
-            "npm install -g n",
-            "n 22"
         ]
     }
 ]
