@@ -50,7 +50,12 @@ def select_server(servers: List[Server]) -> Server:
     """Prompt the user to select a server via a fuzzy search menu."""
     choices = [{"name": srv.label, "value": srv} for srv in servers]
     selected = inquirer.fuzzy(
-        message="Select a server:", choices=choices, max_height="100%"
+        message="Select a server:",
+        instruction="(use arrows to scroll and `enter` to confirm)",
+        invalid_message="please select a server",
+        choices=choices,
+        validate=lambda result: result is not None,
+        max_height="100%"
     ).execute()
     return selected
 
@@ -62,9 +67,12 @@ def load_actions(path: str) -> list[Action]:
 def select_actions(actions: List[Action]) -> List[Action]:
     choices = [{"name": a.name, "value": a} for a in actions]
     return inquirer.checkbox(
-        message="Choose one or more actions (use `space` to select and `enter` to confirm):",
+        message="Choose one or more actions:",
+        instruction="(use `space` to select and `enter` to confirm)",
+        invalid_message="please select at least one action",
         choices=choices,
         validate=lambda result: len(result) > 0,
+        max_height="100%"
     ).execute()
 
 

@@ -25,7 +25,7 @@
     },
     {
         "key": "ssh_php_version_56",
-        "name": "Switch to PHP version 5.6",
+        "name": "Switch PHP version to 5.6",
         "interactive": false,
         "commands": [
             "sudo update-alternatives --set php /usr/bin/php5.6",
@@ -34,7 +34,7 @@
     },
     {
         "key": "ssh_php_version_70",
-        "name": "Switch to PHP version 7.0",
+        "name": "Switch PHP version to 7.0",
         "interactive": false,
         "commands": [
             "sudo update-alternatives --set php /usr/bin/php7.0",
@@ -43,7 +43,7 @@
     },
     {
         "key": "ssh_php_version_74",
-        "name": "Switch to PHP version 7.4",
+        "name": "Switch PHP version to 7.4",
         "interactive": false,
         "commands": [
             "sudo update-alternatives --set php /usr/bin/php7.4",
@@ -52,7 +52,7 @@
     },
     {
         "key": "ssh_php_version_81",
-        "name": "Switch to PHP version 8.1",
+        "name": "Switch PHP version to 8.1",
         "interactive": false,
         "commands": [
             "sudo update-alternatives --set php /usr/bin/php8.1",
@@ -61,7 +61,7 @@
     },
     {
         "key": "ssh_php_version_83",
-        "name": "Switch to PHP version 8.3",
+        "name": "Switch PHP version to 8.3",
         "interactive": false,
         "commands": [
             "sudo update-alternatives --set php /usr/bin/php8.3",
@@ -70,7 +70,7 @@
     },
     {
         "key": "ssh_php_version_84",
-        "name": "Switch to PHP version 8.4",
+        "name": "Switch PHP version to 8.4",
         "interactive": false,
         "commands": [
             "sudo update-alternatives --set php /usr/bin/php8.4",
@@ -97,7 +97,7 @@
     },
     {
         "key": "ssh_apache_vhost",
-        "name": "Switch to virtual host '000-default.conf'",
+        "name": "Use '000-default.conf' as only v-host",
         "interactive": false,
         "commands": [
             "sudo a2dissite *.conf",
@@ -107,7 +107,7 @@
     },
     {
         "key": "ssh_apache_vhost",
-        "name": "Switch to virtual host 'default-ssl.conf'",
+        "name": "Use 'default-ssl.conf' as only v-host",
         "interactive": false,
         "commands": [
             "sudo a2dissite *.conf",
@@ -117,7 +117,7 @@
     },
     {
         "key": "ssh_apache_vhost",
-        "name": "Switch to virtual host 'dev-extranet.conf'",
+        "name": "Use 'dev-extranet.conf' as only v-host",
         "interactive": false,
         "commands": [
             "sudo a2dissite *.conf",
@@ -127,7 +127,7 @@
     },
     {
         "key": "ssh_apache_vhost",
-        "name": "Switch to virtual host 'dev-nuxt.conf'",
+        "name": "Use 'dev-nuxt.conf' as only v-host",
         "interactive": false,
         "commands": [
             "sudo a2dissite *.conf",
@@ -137,7 +137,7 @@
     },
     {
         "key": "ssh_apache_vhost",
-        "name": "Switch to virtual host 'dev-php5.6.conf'",
+        "name": "Use 'dev-php5.6.conf' as only v-host",
         "interactive": false,
         "commands": [
             "sudo a2dissite *.conf",
@@ -147,7 +147,7 @@
     },
     {
         "key": "ssh_apache_vhost",
-        "name": "Switch to virtual host 'dev-php7.0.conf'",
+        "name": "Use 'dev-php7.0.conf' as only v-host",
         "interactive": false,
         "commands": [
             "sudo a2dissite *.conf",
@@ -157,7 +157,7 @@
     },
     {
         "key": "ssh_apache_vhost",
-        "name": "Switch to virtual host 'dev-php7.4.conf'",
+        "name": "Use 'dev-php7.4.conf' as only v-host",
         "interactive": false,
         "commands": [
             "sudo a2dissite *.conf",
@@ -167,7 +167,7 @@
     },
     {
         "key": "ssh_apache_vhost",
-        "name": "Switch to virtual host 'dev-php8.3.conf'",
+        "name": "Use 'dev-php8.3.conf' as only v-host",
         "interactive": false,
         "commands": [
             "sudo a2dissite *.conf",
@@ -177,7 +177,7 @@
     },
     {
         "key": "ssh_apache_vhost",
-        "name": "Switch to virtual host 'dev-php8.4.conf'",
+        "name": "Use 'dev-php8.4.conf' as only v-host",
         "interactive": false,
         "commands": [
             "sudo a2dissite *.conf",
@@ -187,7 +187,7 @@
     },
     {
         "key": "ssh_apache_vhost",
-        "name": "Switch to virtual host 'dev-quasar.conf'",
+        "name": "Use 'dev-quasar.conf' as only v-host",
         "interactive": false,
         "commands": [
             "sudo a2dissite *.conf",
@@ -197,7 +197,7 @@
     },
     {
         "key": "ssh_apache_vhost",
-        "name": "Switch to virtual host 'dev-quasar-noback.conf'",
+        "name": "Use 'dev-quasar-noback.conf' as only v-host",
         "interactive": false,
         "commands": [
             "sudo a2dissite *.conf",
@@ -207,7 +207,7 @@
     },
     {
         "key": "ssh_apache_vhost",
-        "name": "Switch to virtual host 'dev-temporary-ouranos.conf'",
+        "name": "Use 'dev-temporary-ouranos.conf' as only v-host",
         "interactive": false,
         "commands": [
             "sudo a2dissite *.conf",
