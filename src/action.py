@@ -25,6 +25,8 @@ class Action:
                 interactive="; exec $SHELL"
 
             command = f'{command} "{" && ".join(self.commands)} {interactive}"'
+            # command = f'{command} "/bin/sh -c \'{ " && ".join(self.commands) }{interactive}\'"'
+            # command = f'{command} "bash --noprofile --norc -c \'{ " && ".join(self.commands) }{interactive}\'"'
 
         print(Fore.WHITE + f"Running: {command}" + Style.RESET_ALL)
 
