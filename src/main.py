@@ -90,7 +90,7 @@ def main() -> None:
     for action in selected_actions:
         action.run(server)
 
-    input("Press Enter to exit...")
+    # input("Press Enter to exit...") # Uncomment to keep the console open after execution
 
 if __name__ == "__main__":
     main()
