@@ -179,6 +179,16 @@
     },
     {
         "key": "ssh_apache_vhost",
+        "name": "Use 'dev-wordpress.conf' as only v-host",
+        "interactive": false,
+        "commands": [
+            "sudo a2dissite *.conf",
+            "sudo a2ensite dev-wordpress.conf",
+            "sudo systemctl restart apache2"
+        ]
+    },
+    {
+        "key": "ssh_apache_vhost",
         "name": "Use 'dev-quasar-noback.conf' as only v-host",
         "interactive": false,
         "commands": [
