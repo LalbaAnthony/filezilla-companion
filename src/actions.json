@@ -78,7 +78,7 @@
         ]
     },
     {
-        "key": "ssh_apache_vhost",
+        "key": "ssh_apache_vhost_default",
         "name": "Use '000-default.conf' as only v-host",
         "interactive": false,
         "commands": [
@@ -88,7 +88,7 @@
         ]
     },
     {
-        "key": "ssh_apache_vhost",
+        "key": "ssh_apache_vhost_ssl",
         "name": "Use 'default-ssl.conf' as only v-host",
         "interactive": false,
         "commands": [
@@ -98,7 +98,7 @@
         ]
     },
     {
-        "key": "ssh_apache_vhost",
+        "key": "ssh_apache_vhost_extranet",
         "name": "Use 'dev-extranet.conf' as only v-host",
         "interactive": false,
         "commands": [
@@ -108,7 +108,7 @@
         ]
     },
     {
-        "key": "ssh_apache_vhost",
+        "key": "ssh_apache_vhost_nuxt",
         "name": "Use 'dev-nuxt.conf' as only v-host",
         "interactive": false,
         "commands": [
@@ -118,7 +118,7 @@
         ]
     },
     {
-        "key": "ssh_apache_vhost",
+        "key": "ssh_apache_vhost_php56",
         "name": "Use 'dev-php5.6.conf' as only v-host",
         "interactive": false,
         "commands": [
@@ -128,7 +128,7 @@
         ]
     },
     {
-        "key": "ssh_apache_vhost",
+        "key": "ssh_apache_vhost_php70",
         "name": "Use 'dev-php7.0.conf' as only v-host",
         "interactive": false,
         "commands": [
@@ -138,7 +138,7 @@
         ]
     },
     {
-        "key": "ssh_apache_vhost",
+        "key": "ssh_apache_vhost_php74",
         "name": "Use 'dev-php7.4.conf' as only v-host",
         "interactive": false,
         "commands": [
@@ -148,7 +148,7 @@
         ]
     },
     {
-        "key": "ssh_apache_vhost",
+        "key": "ssh_apache_vhost_php83",
         "name": "Use 'dev-php8.3.conf' as only v-host",
         "interactive": false,
         "commands": [
@@ -158,7 +158,7 @@
         ]
     },
     {
-        "key": "ssh_apache_vhost",
+        "key": "ssh_apache_vhost_php84",
         "name": "Use 'dev-php8.4.conf' as only v-host",
         "interactive": false,
         "commands": [
@@ -168,7 +168,7 @@
         ]
     },
     {
-        "key": "ssh_apache_vhost",
+        "key": "ssh_apache_vhost_quasar",
         "name": "Use 'dev-quasar.conf' as only v-host",
         "interactive": false,
         "commands": [
@@ -178,17 +178,7 @@
         ]
     },
     {
-        "key": "ssh_apache_vhost",
-        "name": "Use 'dev-wordpress.conf' as only v-host",
-        "interactive": false,
-        "commands": [
-            "sudo a2dissite *.conf",
-            "sudo a2ensite dev-wordpress.conf",
-            "sudo systemctl restart apache2"
-        ]
-    },
-    {
-        "key": "ssh_apache_vhost",
+        "key": "ssh_apache_vhost_quasar_noback",
         "name": "Use 'dev-quasar-noback.conf' as only v-host",
         "interactive": false,
         "commands": [
@@ -198,12 +188,22 @@
         ]
     },
     {
-        "key": "ssh_apache_vhost",
+        "key": "ssh_apache_vhost_temporary_ouranos",
         "name": "Use 'dev-temporary-ouranos.conf' as only v-host",
         "interactive": false,
         "commands": [
             "sudo a2dissite *.conf",
             "sudo a2ensite dev-temporary-ouranos.conf",
+            "sudo systemctl restart apache2"
+        ]
+    },
+    {
+        "key": "ssh_apache_vhost_wordpress",
+        "name": "Use 'dev-wordpress.conf' as only v-host",
+        "interactive": false,
+        "commands": [
+            "sudo a2dissite *.conf",
+            "sudo a2ensite dev-wordpress.conf",
             "sudo systemctl restart apache2"
         ]
     },
