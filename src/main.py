@@ -9,13 +9,15 @@ from utils import (
     select_server,
     select_actions,
     get_sitemanager_path,
+    find_ssh,
+    ssh_is_functional
 )
-
 
 def main() -> None:
     colorama_init(autoreset=True, strip=False, convert=True)
 
-    if not shutil.which("ssh"):
+    ssh_path = find_ssh()
+    if not ssh_path or not ssh_is_functional(ssh_path):
         print(
             Fore.RED
             + "SSH client is not installed or not found in PATH."

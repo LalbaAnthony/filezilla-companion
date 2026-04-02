@@ -8,6 +8,39 @@ from InquirerPy import inquirer
 from colorama import Fore, Style
 from server import Server
 from action import Action
+import shutil
+import subprocess
+import sys
+
+# Windows fallback paths for OpenSSH
+_WINDOWS_SSH_PATHS = [
+    r"C:\Windows\System32\OpenSSH\ssh.exe",
+    r"C:\Program Files\OpenSSH\ssh.exe",
+    r"C:\Program Files\Git\usr\bin\ssh.exe",
+]
+
+def find_ssh() -> str | None:
+    """Return the path to the ssh executable, or None if not found."""
+    found = shutil.which("ssh") or shutil.which("ssh.exe")
+    if found:
+        return found
+    if sys.platform == "win32":
+        for path in _WINDOWS_SSH_PATHS:
+            if os.path.isfile(path):
+                return path
+    return None
+
+def ssh_is_functional(ssh_path: str) -> bool:
+    """Verify the binary actually runs (guards against broken installs)."""
+    try:
+        result = subprocess.run(
+            [ssh_path, "-V"],
+            capture_output=True,
+            timeout=5,
+        )
+        return result.returncode == 0 or b"OpenSSH" in result.stderr
+    except Exception:
+        return False
 
 def parse_sitemanager(path: str) -> List[Server]:
     """
