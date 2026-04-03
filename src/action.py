@@ -32,7 +32,8 @@ class Action:
 
         if self.interactive:
             if platform.system() == "Windows":
-                subprocess.Popen(["start", "cmd", "/k", command], shell=True)
+                cmd = r"C:\Windows\Sysnative\cmd.exe"
+                subprocess.Popen([cmd, "/k", command])
             else:
                 for emulator in (
                     ["gnome-terminal", "--"],

@@ -12,11 +12,11 @@ import shutil
 import subprocess
 import sys
 
-# Windows fallback paths for OpenSSH
 _WINDOWS_SSH_PATHS = [
+    r"C:\Windows\Sysnative\OpenSSH\ssh.exe",
     r"C:\Windows\System32\OpenSSH\ssh.exe",
-    r"C:\Program Files\OpenSSH\ssh.exe",
     r"C:\Program Files\Git\usr\bin\ssh.exe",
+    r"C:\Program Files\OpenSSH\ssh.exe",
 ]
 
 def find_ssh() -> str | None:
