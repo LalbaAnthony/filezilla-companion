@@ -82,7 +82,7 @@
         "name": "Use '000-default.conf' as only v-host",
         "interactive": false,
         "commands": [
-            "sudo a2dissite *.conf",
+            "(sudo a2dissite *.conf || echo 'No site to disable')",
             "sudo a2ensite 000-default.conf",
             "sudo systemctl restart apache2"
         ]
@@ -92,7 +92,7 @@
         "name": "Use 'default-ssl.conf' as only v-host",
         "interactive": false,
         "commands": [
-            "sudo a2dissite *.conf",
+            "(sudo a2dissite *.conf || echo 'No site to disable')",
             "sudo a2ensite default-ssl.conf",
             "sudo systemctl restart apache2"
         ]
@@ -102,7 +102,7 @@
         "name": "Use 'dev-extranet.conf' as only v-host",
         "interactive": false,
         "commands": [
-            "sudo a2dissite *.conf",
+            "(sudo a2dissite *.conf || echo 'No site to disable')",
             "sudo a2ensite dev-extranet.conf",
             "sudo systemctl restart apache2"
         ]
@@ -112,58 +112,58 @@
         "name": "Use 'dev-nuxt.conf' as only v-host",
         "interactive": false,
         "commands": [
-            "sudo a2dissite *.conf",
+            "(sudo a2dissite *.conf || echo 'No site to disable')",
             "sudo a2ensite dev-nuxt.conf",
             "sudo systemctl restart apache2"
         ]
     },
     {
         "key": "ssh_apache_vhost_php56",
-        "name": "Use 'dev-php5.6.conf' as only v-host",
+        "name": "Use 'dev-ample-php5.6.conf' as only v-host",
         "interactive": false,
         "commands": [
-            "sudo a2dissite *.conf",
-            "sudo a2ensite dev-php5.6.conf",
+            "(sudo a2dissite *.conf || echo 'No site to disable')",
+            "sudo a2ensite dev-ample-php5.6.conf",
             "sudo systemctl restart apache2"
         ]
     },
     {
         "key": "ssh_apache_vhost_php70",
-        "name": "Use 'dev-php7.0.conf' as only v-host",
+        "name": "Use 'dev-ample-php7.0.conf' as only v-host",
         "interactive": false,
         "commands": [
-            "sudo a2dissite *.conf",
-            "sudo a2ensite dev-php7.0.conf",
+            "(sudo a2dissite *.conf || echo 'No site to disable')",
+            "sudo a2ensite dev-ample-php7.0.conf",
             "sudo systemctl restart apache2"
         ]
     },
     {
         "key": "ssh_apache_vhost_php74",
-        "name": "Use 'dev-php7.4.conf' as only v-host",
+        "name": "Use 'dev-ample-php7.4.conf' as only v-host",
         "interactive": false,
         "commands": [
-            "sudo a2dissite *.conf",
-            "sudo a2ensite dev-php7.4.conf",
+            "(sudo a2dissite *.conf || echo 'No site to disable')",
+            "sudo a2ensite dev-ample-php7.4.conf",
             "sudo systemctl restart apache2"
         ]
     },
     {
         "key": "ssh_apache_vhost_php83",
-        "name": "Use 'dev-php8.3.conf' as only v-host",
+        "name": "Use 'dev-ample-php8.3.conf' as only v-host",
         "interactive": false,
         "commands": [
-            "sudo a2dissite *.conf",
-            "sudo a2ensite dev-php8.3.conf",
+            "(sudo a2dissite *.conf || echo 'No site to disable')",
+            "sudo a2ensite dev-ample-php8.3.conf",
             "sudo systemctl restart apache2"
         ]
     },
     {
         "key": "ssh_apache_vhost_php84",
-        "name": "Use 'dev-php8.4.conf' as only v-host",
+        "name": "Use 'dev-ample-php8.4.conf' as only v-host",
         "interactive": false,
         "commands": [
-            "sudo a2dissite *.conf",
-            "sudo a2ensite dev-php8.4.conf",
+            "(sudo a2dissite *.conf || echo 'No site to disable')",
+            "sudo a2ensite dev-ample-php8.4.conf",
             "sudo systemctl restart apache2"
         ]
     },
@@ -172,7 +172,7 @@
         "name": "Use 'dev-quasar.conf' as only v-host",
         "interactive": false,
         "commands": [
-            "sudo a2dissite *.conf",
+            "(sudo a2dissite *.conf || echo 'No site to disable')",
             "sudo a2ensite dev-quasar.conf",
             "sudo systemctl restart apache2"
         ]
@@ -182,7 +182,7 @@
         "name": "Use 'dev-quasar-noback.conf' as only v-host",
         "interactive": false,
         "commands": [
-            "sudo a2dissite *.conf",
+            "(sudo a2dissite *.conf || echo 'No site to disable')",
             "sudo a2ensite dev-quasar-noback.conf",
             "sudo systemctl restart apache2"
         ]
@@ -192,7 +192,7 @@
         "name": "Use 'dev-temporary-ouranos.conf' as only v-host",
         "interactive": false,
         "commands": [
-            "sudo a2dissite *.conf",
+            "(sudo a2dissite *.conf || echo 'No site to disable')",
             "sudo a2ensite dev-temporary-ouranos.conf",
             "sudo systemctl restart apache2"
         ]
@@ -202,7 +202,7 @@
         "name": "Use 'dev-wordpress.conf' as only v-host",
         "interactive": false,
         "commands": [
-            "sudo a2dissite *.conf",
+            "(sudo a2dissite *.conf || echo 'No site to disable')",
             "sudo a2ensite dev-wordpress.conf",
             "sudo systemctl restart apache2"
         ]
