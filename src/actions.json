@@ -109,11 +109,11 @@
     },
     {
         "key": "ssh_apache_vhost_nuxt",
-        "name": "Use 'dev-nuxt.conf' as only v-host",
+        "name": "Use 'dev-nuxt-wp.conf' as only v-host",
         "interactive": false,
         "commands": [
             "(sudo a2dissite *.conf || echo 'No site to disable')",
-            "sudo a2ensite dev-nuxt.conf",
+            "sudo a2ensite dev-nuxt-wp.conf",
             "sudo systemctl restart apache2"
         ]
     },
