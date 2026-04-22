@@ -49,8 +49,8 @@ class Server:
             cmd_parts += [f"{self.user}@{self.host}"]
         if self.port and self.port:
             cmd_parts += ["-p", str(self.port)]
-        if self.password:
-            cmd_parts += ["-o", "PasswordAuthentication=yes"]
+        # if self.password:
+        #     cmd_parts += ["-o", "PasswordAuthentication=yes"]
 
         cmd = " ".join(cmd_parts)
 
