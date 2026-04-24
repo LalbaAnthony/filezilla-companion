@@ -6,200 +6,118 @@
         "commands": []
     },
     {
-        "key": "ssh_php_version_56",
-        "name": "Switch PHP version to 5.6",
+        "key": "setup_project_extranet",
+        "name": "Setup for extranet project",
         "interactive": false,
         "commands": [
-            "sudo update-alternatives --set php /usr/bin/php5.6",
-            "sudo systemctl restart apache2"
-        ]
-    },
-    {
-        "key": "ssh_php_version_70",
-        "name": "Switch PHP version to 7.0",
-        "interactive": false,
-        "commands": [
-            "sudo update-alternatives --set php /usr/bin/php7.0",
-            "sudo systemctl restart apache2"
-        ]
-    },
-    {
-        "key": "ssh_php_version_74",
-        "name": "Switch PHP version to 7.4",
-        "interactive": false,
-        "commands": [
-            "sudo update-alternatives --set php /usr/bin/php7.4",
-            "sudo systemctl restart apache2"
-        ]
-    },
-    {
-        "key": "ssh_php_version_81",
-        "name": "Switch PHP version to 8.1",
-        "interactive": false,
-        "commands": [
-            "sudo update-alternatives --set php /usr/bin/php8.1",
-            "sudo systemctl restart apache2"
-        ]
-    },
-    {
-        "key": "ssh_php_version_83",
-        "name": "Switch PHP version to 8.3",
-        "interactive": false,
-        "commands": [
-            "sudo update-alternatives --set php /usr/bin/php8.3",
-            "sudo systemctl restart apache2"
-        ]
-    },
-    {
-        "key": "ssh_php_version_84",
-        "name": "Switch PHP version to 8.4",
-        "interactive": false,
-        "commands": [
-            "sudo update-alternatives --set php /usr/bin/php8.4",
-            "sudo systemctl restart apache2"
-        ]
-    },
-    {
-        "key": "ssh_node_version_18",
-        "name": "Switch to NODE 18",
-        "interactive": false,
-        "commands": [
-            "npm install -g n",
-            "n 18"
-        ]
-    },
-    {
-        "key": "ssh_node_version_22",
-        "name": "Switch to NODE 22",
-        "interactive": false,
-        "commands": [
-            "npm install -g n",
-            "n 22"
-        ]
-    },
-    {
-        "key": "ssh_apache_vhost_default",
-        "name": "Use '000-default.conf' as only v-host",
-        "interactive": false,
-        "commands": [
-            "(sudo a2dissite *.conf || echo 'No site to disable')",
-            "sudo a2ensite 000-default.conf",
-            "sudo systemctl restart apache2"
-        ]
-    },
-    {
-        "key": "ssh_apache_vhost_ssl",
-        "name": "Use 'default-ssl.conf' as only v-host",
-        "interactive": false,
-        "commands": [
-            "(sudo a2dissite *.conf || echo 'No site to disable')",
-            "sudo a2ensite default-ssl.conf",
-            "sudo systemctl restart apache2"
-        ]
-    },
-    {
-        "key": "ssh_apache_vhost_extranet",
-        "name": "Use 'dev-extranet.conf' as only v-host",
-        "interactive": false,
-        "commands": [
+            "(npm install -g n && n 22)",
             "(sudo a2dissite *.conf || echo 'No site to disable')",
             "sudo a2ensite dev-extranet.conf",
             "sudo systemctl restart apache2"
         ]
     },
     {
-        "key": "ssh_apache_vhost_nuxt",
-        "name": "Use 'dev-nuxt-wp.conf' as only v-host",
+        "key": "setup_project_nuxt",
+        "name": "Setup for Nuxt/WP projects",
         "interactive": false,
         "commands": [
+            "(npm install -g n && n 22)",
             "(sudo a2dissite *.conf || echo 'No site to disable')",
             "sudo a2ensite dev-nuxt-wp.conf",
             "sudo systemctl restart apache2"
         ]
     },
     {
-        "key": "ssh_apache_vhost_php56",
-        "name": "Use 'dev-ample-php5.6.conf' as only v-host",
+        "key": "setup_project_php56",
+        "name": "Setup for Ample (PHP 5.6) projects",
         "interactive": false,
         "commands": [
+            "sudo update-alternatives --set php /usr/bin/php5.6",
             "(sudo a2dissite *.conf || echo 'No site to disable')",
             "sudo a2ensite dev-ample-php5.6.conf",
             "sudo systemctl restart apache2"
         ]
     },
     {
-        "key": "ssh_apache_vhost_php70",
-        "name": "Use 'dev-ample-php7.0.conf' as only v-host",
+        "key": "setup_project_php70",
+        "name": "Setup for Ample (PHP 7.0) projects",
         "interactive": false,
         "commands": [
+            "sudo update-alternatives --set php /usr/bin/php7.0",
             "(sudo a2dissite *.conf || echo 'No site to disable')",
             "sudo a2ensite dev-ample-php7.0.conf",
             "sudo systemctl restart apache2"
         ]
     },
     {
-        "key": "ssh_apache_vhost_php74",
-        "name": "Use 'dev-ample-php7.4.conf' as only v-host",
+        "key": "setup_project_php74",
+        "name": "Setup for Ample (PHP 7.4) projects",
         "interactive": false,
         "commands": [
+            "sudo update-alternatives --set php /usr/bin/php7.4",
             "(sudo a2dissite *.conf || echo 'No site to disable')",
             "sudo a2ensite dev-ample-php7.4.conf",
             "sudo systemctl restart apache2"
         ]
     },
     {
-        "key": "ssh_apache_vhost_php83",
-        "name": "Use 'dev-ample-php8.3.conf' as only v-host",
+        "key": "setup_project_php83",
+        "name": "Setup for Ample (PHP 8.3) projects",
         "interactive": false,
         "commands": [
+            "sudo update-alternatives --set php /usr/bin/php8.3",
             "(sudo a2dissite *.conf || echo 'No site to disable')",
             "sudo a2ensite dev-ample-php8.3.conf",
             "sudo systemctl restart apache2"
         ]
     },
     {
-        "key": "ssh_apache_vhost_php84",
-        "name": "Use 'dev-ample-php8.4.conf' as only v-host",
+        "key": "setup_project_php84",
+        "name": "Setup for Ample (PHP 8.4) projects",
         "interactive": false,
         "commands": [
+            "sudo update-alternatives --set php /usr/bin/php8.4",
             "(sudo a2dissite *.conf || echo 'No site to disable')",
             "sudo a2ensite dev-ample-php8.4.conf",
             "sudo systemctl restart apache2"
         ]
     },
     {
-        "key": "ssh_apache_vhost_quasar",
-        "name": "Use 'dev-quasar.conf' as only v-host",
+        "key": "setup_project_quasar",
+        "name": "Setup for Quasar projects",
         "interactive": false,
         "commands": [
+            "(npm install -g n && n 18)",
             "(sudo a2dissite *.conf || echo 'No site to disable')",
             "sudo a2ensite dev-quasar.conf",
             "sudo systemctl restart apache2"
         ]
     },
     {
-        "key": "ssh_apache_vhost_quasar_noback",
-        "name": "Use 'dev-quasar-noback.conf' as only v-host",
+        "key": "setup_project_quasar_noback",
+        "name": "Setup for Quasar (no-back) projects",
         "interactive": false,
         "commands": [
+            "(npm install -g n && n 18)",
             "(sudo a2dissite *.conf || echo 'No site to disable')",
             "sudo a2ensite dev-quasar-noback.conf",
             "sudo systemctl restart apache2"
         ]
     },
     {
-        "key": "ssh_apache_vhost_temporary_ouranos",
-        "name": "Use 'dev-temporary-ouranos.conf' as only v-host",
+        "key": "setup_project_temporary_ouranos",
+        "name": "Setup for temporary-ouranos project",
         "interactive": false,
         "commands": [
+            "(npm install -g n && n 22)",
             "(sudo a2dissite *.conf || echo 'No site to disable')",
             "sudo a2ensite dev-temporary-ouranos.conf",
             "sudo systemctl restart apache2"
         ]
     },
     {
-        "key": "ssh_apache_vhost_wordpress",
-        "name": "Use 'dev-wordpress.conf' as only v-host",
+        "key": "setup_project_wordpress",
+        "name": "Setup for WordPress projects",
         "interactive": false,
         "commands": [
             "(sudo a2dissite *.conf || echo 'No site to disable')",
