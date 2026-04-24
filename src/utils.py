@@ -19,6 +19,17 @@ _WINDOWS_SSH_PATHS = [
     r"C:\Program Files\OpenSSH\ssh.exe",
 ]
 
+def find_cmd() -> str | None:
+    """Return the path to the cmd executable on Windows, or None if not found."""
+    found = shutil.which("cmd") or shutil.which("cmd.exe")
+    if found:
+        return found
+    if sys.platform == "win32":
+        for path in [r"C:\Windows\System32\cmd.exe", r"C:\Windows\Sysnative\cmd.exe"]:
+            if os.path.isfile(path):
+                return path
+    return None
+
 def find_ssh() -> str | None:
     """Return the path to the ssh executable, or None if not found."""
     found = shutil.which("ssh") or shutil.which("ssh.exe")

@@ -6,7 +6,25 @@
         "commands": []
     },
     {
-        "key": "setup_project_extranet",
+        "key": "mysql_restart",
+        "name": "Restart MySQL",
+        "interactive": false,
+        "commands": [
+            "sudo systemctl restart mysql || sudo service mysql restart"
+        ]
+    },
+    {
+        "key": "apache_restart",
+        "name": "Restart Apache",
+        "interactive": false,
+        "commands": [
+            "sudo systemctl restart apache2",
+            "sudo apache2ctl configtest",
+            "sleep 5"
+        ]
+    },
+    {
+        "key": "agora_setup_project_extranet",
         "name": "Setup for extranet project",
         "interactive": false,
         "commands": [
@@ -17,7 +35,7 @@
         ]
     },
     {
-        "key": "setup_project_nuxt",
+        "key": "agora_setup_project_nuxt-wp",
         "name": "Setup for Nuxt/WP projects",
         "interactive": false,
         "commands": [
@@ -28,7 +46,7 @@
         ]
     },
     {
-        "key": "setup_project_php56",
+        "key": "agora_setup_project_ample-php56",
         "name": "Setup for Ample (PHP 5.6) projects",
         "interactive": false,
         "commands": [
@@ -39,7 +57,7 @@
         ]
     },
     {
-        "key": "setup_project_php70",
+        "key": "agora_setup_project_ample-php70",
         "name": "Setup for Ample (PHP 7.0) projects",
         "interactive": false,
         "commands": [
@@ -50,7 +68,7 @@
         ]
     },
     {
-        "key": "setup_project_php74",
+        "key": "agora_setup_project_ample-php74",
         "name": "Setup for Ample (PHP 7.4) projects",
         "interactive": false,
         "commands": [
@@ -61,7 +79,7 @@
         ]
     },
     {
-        "key": "setup_project_php83",
+        "key": "agora_setup_project_ample-php83",
         "name": "Setup for Ample (PHP 8.3) projects",
         "interactive": false,
         "commands": [
@@ -72,7 +90,7 @@
         ]
     },
     {
-        "key": "setup_project_php84",
+        "key": "agora_setup_project_ample-php84",
         "name": "Setup for Ample (PHP 8.4) projects",
         "interactive": false,
         "commands": [
@@ -83,7 +101,7 @@
         ]
     },
     {
-        "key": "setup_project_quasar",
+        "key": "agora_setup_project_quasar",
         "name": "Setup for Quasar projects",
         "interactive": false,
         "commands": [
@@ -94,7 +112,7 @@
         ]
     },
     {
-        "key": "setup_project_quasar_noback",
+        "key": "agora_setup_project_quasar-noback",
         "name": "Setup for Quasar (no-back) projects",
         "interactive": false,
         "commands": [
@@ -105,7 +123,7 @@
         ]
     },
     {
-        "key": "setup_project_temporary_ouranos",
+        "key": "agora_setup_project_temporary-ouranos",
         "name": "Setup for temporary-ouranos project",
         "interactive": false,
         "commands": [
@@ -116,31 +134,13 @@
         ]
     },
     {
-        "key": "setup_project_wordpress",
+        "key": "agora_setup_project_wordpress",
         "name": "Setup for WordPress projects",
         "interactive": false,
         "commands": [
             "(sudo a2dissite *.conf || echo 'No site to disable')",
             "sudo a2ensite dev-wordpress.conf",
             "sudo systemctl restart apache2"
-        ]
-    },
-    {
-        "key": "ssh_mysql_restart",
-        "name": "Restart MySQL",
-        "interactive": false,
-        "commands": [
-            "sudo systemctl restart mysql || sudo service mysql restart"
-        ]
-    },
-    {
-        "key": "ssh_apache_restart",
-        "name": "Restart Apache",
-        "interactive": false,
-        "commands": [
-            "sudo systemctl restart apache2",
-            "sudo apache2ctl configtest",
-            "sleep 5"
         ]
     }
 ]

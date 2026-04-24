@@ -32,7 +32,8 @@ class Action:
 
         if self.interactive:
             if platform.system() == "Windows":
-                cmd = r"C:\Windows\Sysnative\cmd.exe"
+                from utils import find_cmd
+                cmd = find_cmd()
                 subprocess.Popen([cmd, "/k", command])
             else:
                 for emulator in (
