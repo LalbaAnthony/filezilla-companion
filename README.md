@@ -7,14 +7,14 @@ FileZilla Companion is a smoll tool that enhances the user experience of FileZil
 1. Install Python if not already installed. You can download it from [python.org](https://www.python.org/downloads/). Ensure that Python is added to your system's PATH during installation.
 
 2. Install pip if not already installed:
-    ```bash
+    ```sh
     python -m ensurepip --upgrade --user
 	# OR
 	python -m pip install --upgrade pip
     ```
 
 3. Install the required packages using pip:
-    ```bash
+    ```sh
     pip install -r requirements.txt
     # OR
     py -m pip install inquirer InquirerPy colorama pyperclip
@@ -22,7 +22,7 @@ FileZilla Companion is a smoll tool that enhances the user experience of FileZil
 
 ## Usage
 
-```bash
+```sh
 cd filezilla-companion
 python main.py
 ```
