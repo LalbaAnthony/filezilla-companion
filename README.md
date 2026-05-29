@@ -23,6 +23,6 @@ FileZilla Companion is a smoll tool that enhances the user experience of FileZil
 ## Usage
 
 ```sh
-cd filezilla-companion
+cd filezilla-companion/src
 python main.py
 ```
