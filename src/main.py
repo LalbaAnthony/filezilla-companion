@@ -86,7 +86,8 @@ def main() -> None:
             print(Fore.RED + "Operation cancelled." + Style.RESET_ALL)
             return
 
-    actions = load_actions("actions.json")
+    actions_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "actions.json")
+    actions = load_actions(actions_path)
     selected_actions = select_actions(actions)
 
     for action in selected_actions:
