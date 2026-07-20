@@ -13,7 +13,7 @@ from utils import (
     ssh_is_functional
 )
 
-def main() -> None:
+def main() -> int:
     colorama_init(autoreset=True, strip=False, convert=True)
 
     ssh_path = find_ssh()
@@ -23,7 +23,7 @@ def main() -> None:
             + "SSH client is not installed or not found in PATH."
             + Style.RESET_ALL
         )
-        return
+        return 1
 
     sitemanager_path = get_sitemanager_path()
 
@@ -33,7 +33,7 @@ def main() -> None:
             + "FileZilla sitemanager.xml not found. Please ensure FileZilla is installed and has saved at least one site."
             + Style.RESET_ALL
         )
-        return
+        return 1
 
     servers = parse_sitemanager(sitemanager_path)
 
@@ -43,7 +43,7 @@ def main() -> None:
             + "No valid server found in the FileZilla site manager."
             + Style.RESET_ALL
         )
-        return
+        return 1
 
     server = select_server(servers)
 
@@ -61,7 +61,7 @@ def main() -> None:
             + "Cannot connect to FTP servers. Please select an SFTP server."
             + Style.RESET_ALL
         )
-        return
+        return 1
 
     if not server.can_connect:
         print(
@@ -69,7 +69,7 @@ def main() -> None:
             + "Cannot connect to the server with the provided details."
             + Style.RESET_ALL
         )
-        return
+        return 1
 
     if not server.is_local:
         confirm = input(
@@ -84,7 +84,7 @@ def main() -> None:
             or confirm.lower() == "yes"
         ):
             print(Fore.RED + "Operation cancelled." + Style.RESET_ALL)
-            return
+            return 1
 
     actions_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "actions.json")
     actions = load_actions(actions_path)
@@ -93,8 +93,11 @@ def main() -> None:
     for action in selected_actions:
         action.run(server)
 
-    # input("Press Enter to exit...") # Uncomment to keep the console open after execution
+    return 0
 
 if __name__ == "__main__":
-    main()
+    exit_code = main()
+    if exit_code != 0:
+        input("Press Enter to exit...") 
+    exit(exit_code)
 
