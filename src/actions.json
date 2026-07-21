@@ -46,6 +46,18 @@
         ]
     },
     {
+        "key": "agora_setup_project_nuxt-laravel",
+        "name": "Setup for Nuxt/Laravel projects",
+        "interactive": false,
+        "commands": [
+            "(npm install -g n && n 22)",
+            "(sudo a2dissite *.conf || echo 'No site to disable')",
+            "sudo a2ensite dev-nuxt-laravel.conf",
+            "sudo a2ensite dev-maildev.conf",
+            "sudo apache2ctl configtest && sudo systemctl restart apache2"
+        ]
+    },
+    {
         "key": "agora_setup_project_ample-php56",
         "name": "Setup for Ample (PHP 5.6) projects",
         "interactive": false,
