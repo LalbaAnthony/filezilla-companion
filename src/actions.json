@@ -46,14 +46,13 @@
         ]
     },
     {
-        "key": "agora_setup_project_nuxt-laravel",
-        "name": "Setup for Nuxt/Laravel projects",
+        "key": "agora_setup_project_atlas",
+        "name": "Setup for Atlas projects",
         "interactive": false,
         "commands": [
             "(npm install -g n && n 22)",
             "(sudo a2dissite *.conf || echo 'No site to disable')",
-            "sudo a2ensite dev-nuxt-laravel.conf",
-            "sudo a2ensite dev-maildev.conf",
+            "sudo a2ensite dev-atlas.conf",
             "sudo apache2ctl configtest && sudo systemctl restart apache2"
         ]
     },
