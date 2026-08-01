@@ -3,6 +3,7 @@
         "key": "ssh",
         "name": "Connect to SSH",
         "interactive": true,
+        "default": true,
         "commands": []
     },
     {

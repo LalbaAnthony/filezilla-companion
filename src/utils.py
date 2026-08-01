@@ -109,7 +109,9 @@ def load_actions(path: str) -> list[Action]:
     return [Action(**item) for item in raw]
 
 def select_actions(actions: List[Action]) -> List[Action]:
-    choices = [{"name": a.name, "value": a} for a in actions]
+    choices = [
+        {"name": a.name, "value": a, "enabled": a.default} for a in actions
+    ]
     return inquirer.checkbox(
         message="Choose one or more actions:",
         instruction="(use `space` to select and `enter` to confirm)",

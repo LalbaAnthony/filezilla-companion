@@ -14,6 +14,7 @@ class Action:
     name: str
     commands: List[str] = field(default_factory=list)
     interactive: bool = False
+    default: bool = False
 
     def run(self, server: "Server") -> None:
         """Execute this action using the server object."""
