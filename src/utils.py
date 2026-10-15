@@ -3,7 +3,7 @@ import os
 import base64
 import platform
 import xml.etree.ElementTree as ET
-from typing import List
+from typing import List, Optional
 from InquirerPy import inquirer
 from colorama import Fore, Style
 from server import Server
@@ -19,7 +19,16 @@ _WINDOWS_SSH_PATHS = [
     r"C:\Program Files\OpenSSH\ssh.exe",
 ]
 
-def find_cmd() -> str | None:
+# Ordered by preference, each entry is the argv prefix that runs the remaining args as a command.
+_POSIX_TERMINALS = [
+    ["x-terminal-emulator", "-e"],  # Debian alternatives entry for the desktop's default terminal
+    ["gnome-terminal", "--"],
+    ["konsole", "-e"],
+    ["xfce4-terminal", "-x"],
+    ["xterm", "-e"],
+]
+
+def find_cmd() -> Optional[str]:
     """Return the path to the cmd executable on Windows, or None if not found."""
     found = shutil.which("cmd") or shutil.which("cmd.exe")
     if found:
@@ -30,7 +39,16 @@ def find_cmd() -> str | None:
                 return path
     return None
 
-def find_ssh() -> str | None:
+def find_terminal() -> Optional[List[str]]:
+    """Return the argv prefix of a graphical terminal emulator on POSIX, or None if unavailable."""
+    if not (os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY")):
+        return None
+    for emulator in _POSIX_TERMINALS:
+        if shutil.which(emulator[0]):
+            return list(emulator)
+    return None
+
+def find_ssh() -> Optional[str]:
     """Return the path to the ssh executable, or None if not found."""
     found = shutil.which("ssh") or shutil.which("ssh.exe")
     if found:
@@ -126,4 +144,14 @@ def get_sitemanager_path() -> str:
     """Determine FileZilla sitemanager.xml path for current OS."""
     if platform.system() == "Windows":
         return os.path.expandvars(r"%APPDATA%\FileZilla\sitemanager.xml")
-    return os.path.expanduser("~/.config/filezilla/sitemanager.xml")
+    home = os.path.expanduser("~")
+    xdg_config = os.environ.get("XDG_CONFIG_HOME") or os.path.join(home, ".config")
+    candidates = [
+        os.path.join(home, ".filezilla", "sitemanager.xml"),  # legacy, FileZilla still prefers it when present
+        os.path.join(xdg_config, "filezilla", "sitemanager.xml"),
+        os.path.join(home, ".var", "app", "org.filezillaproject.Filezilla", "config", "filezilla", "sitemanager.xml"),
+    ]
+    for path in candidates:
+        if os.path.isfile(path):
+            return path
+    return candidates[1]

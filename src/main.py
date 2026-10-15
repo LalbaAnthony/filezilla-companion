@@ -1,4 +1,5 @@
 import os
+import platform
 import shutil
 import xml.etree.ElementTree as ET
 from colorama import init as colorama_init, Fore, Style
@@ -14,7 +15,8 @@ from utils import (
 )
 
 def main() -> int:
-    colorama_init(autoreset=True, strip=False, convert=True)
+    # Forcing conversion outside Windows strips every ANSI sequence, since there is no win32 console to convert to.
+    colorama_init(autoreset=True, strip=False, convert=platform.system() == "Windows")
 
     ssh_path = find_ssh()
     if not ssh_path or not ssh_is_functional(ssh_path):
