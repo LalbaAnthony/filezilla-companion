@@ -1,4 +1,3 @@
-inquirer
 InquirerPy
 colorama
 pyperclip
