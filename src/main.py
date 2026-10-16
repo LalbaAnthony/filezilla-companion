@@ -54,11 +54,6 @@ def main() -> int:
         Console.error("Cannot connect to the server with the provided details.")
         return 1
 
-    if not server.is_local:
-        if not Console.confirm("Warning: This server is likely to be a production server. Do you want to continue?"):
-            Console.error("Operation cancelled.")
-            return 1
-
     try:
         connect(server)
     except OSError as e:
