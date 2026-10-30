@@ -120,7 +120,7 @@ class ImportBitwardenCommandTest(unittest.TestCase):
 
         self.assertEqual(self._run(), 1)
 
-        self.assertIn("Bitwarden CLI (bw) not found in PATH.", self.stdout.getvalue())
+        self.assertIn("Bitwarden CLI (bw) not found in PATH. Try `npm install -g @bitwarden/cli`.", self.stdout.getvalue())
         self.list_logins.assert_not_called()
 
     def test_vault_must_be_unlocked(self):

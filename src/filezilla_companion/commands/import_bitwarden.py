@@ -126,7 +126,7 @@ def _read_vault() -> Optional[List[bitwarden.Login]]:
     """Return the logins of the vault, or None after reporting why they cannot be read."""
     bw = bitwarden.find_bw()
     if not bw:
-        Console.error("Bitwarden CLI (bw) not found in PATH.")
+        Console.error("Bitwarden CLI (bw) not found in PATH. Try `npm install -g @bitwarden/cli`.")
         return None
     try:
         status = bitwarden.status(bw)
