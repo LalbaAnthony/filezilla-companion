@@ -1,6 +1,5 @@
 from typing import TYPE_CHECKING, Any, Dict, List, Tuple, Union
 from InquirerPy import inquirer
-from InquirerPy.base.control import Choice
 from InquirerPy.separator import Separator
 from filezilla_companion.filezilla.server import Server
 
@@ -35,17 +34,19 @@ def select_criteria(criteria: List["Criterion"]) -> List["Criterion"]:
         message="Select the criteria:",
         instruction="(use `space` to toggle and `enter` to confirm)",
         invalid_message="please select at least one criterion",
-        choices=[Choice(criterion, name=criterion.label, enabled=True) for criterion in criteria],
+        choices=[{"name": criterion.label, "value": criterion, "enabled": True} for criterion in criteria],
         validate=lambda result: len(result) > 0,
         max_height="100%"
     ).execute()
 
 def select_actions(sections: List[Tuple[str, List["Action"]]]) -> List["Action"]:
     """Prompt the user to check the changes to apply, listed under their section title and checked as proposed."""
-    choices: List[Union[Choice, Separator]] = []
+    # Dicts, not InquirerPy Choice objects: InquirerPy turns a Choice into a dict with dataclasses.asdict(), which
+    # also converts dataclass values recursively, so the prompt would return dicts instead of the Action objects.
+    choices: List[Union[Dict[str, Any], Separator]] = []
     for title, actions in sections:
         choices.append(Separator(f"-- {title} --"))
-        choices += [Choice(action, name=action.label, enabled=action.checked) for action in actions]
+        choices += [{"name": action.label, "value": action, "enabled": action.checked} for action in actions]
     return inquirer.checkbox(
         message="Select the changes to apply:",
         instruction="(use `space` to toggle and `enter` to confirm)",

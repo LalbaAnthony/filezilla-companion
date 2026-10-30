@@ -163,6 +163,7 @@ A criterion needing credential tests calls `analysis.check_credentials(servers)`
 - Commands get their `Context` from `tests.helpers.make_context(servers)` (in-memory site manager); `CleanCommand` tests load a real temporary `sitemanager.xml` instead, since they check what is written.
 - Key file tests generate keys with `cryptography` (a paramiko dependency); the `.ppk` test only needs the file header.
 - `Console.progress()` throttles non-terminal output through the class attribute `Console._last_progress`, which outlives a test: tests asserting progress lines patch it to `0.0`.
+- Checkbox prompt tests feed the choices given to the mocked `inquirer.checkbox` to InquirerPy's real `InquirerPyCheckboxControl` (it needs no terminal) and assert each value is the original object (`assertIs`): asserting only on the mock's arguments missed the `Choice`/`asdict` conversion described in Gotchas.
 - `test_windows_uses_appdata` is skipped outside Windows (`%VAR%` expansion only exists in `ntpath`).
 - CI runs the suite headless (no TTY, no display, no clipboard tool) on Linux and Windows with the oldest supported Python, so a test that relies on any of these, on the host OS, or on syntax newer than 3.9 fails there.
 
@@ -197,6 +198,7 @@ External dependencies: an OpenSSH client for `connect` (PATH first; on Windows a
 - Command modules are named so they do not shadow builtins in `commands/__init__.py` (`list_servers.py`, not `list.py`): importing a submodule binds its name in the package namespace.
 - A command slug must not be `help`: argparse already defines `--help`, and building the parser would fail.
 - Command menus and flags hold the `COMMANDS` instances themselves; tests that patch a command's `run` patch that shared instance (`mock.patch.object(COMMANDS[i], "run")`).
+- InquirerPy choices are passed as dicts (`{"name", "value", "enabled"}`), never as `InquirerPy.base.control.Choice`: InquirerPy converts a `Choice` with `dataclasses.asdict()`, which recursively turns a dataclass value (`Action`, `Server`) into a dict and deep-copies any other value, so the prompt returns copies instead of the objects passed in.
 - The interactive menus need a TTY, and the failure path blocks on `input()`. `--list` against a fake `%APPDATA%`/`$XDG_CONFIG_HOME` is the only non-interactive smoke run; otherwise validate changes with the test suite.
 - `Server.command` returns one shell string, not an argv list. It runs through `cmd.exe` on Windows and `sh` on POSIX, and only the keyfile path is quoted. Changes must stay valid for both shells; `tests/test_ssh.py` and `tests/test_terminal.py` assert the exact strings.
 - Protocol handling: `load_sitemanager()` defaults a missing `<Protocol>` to `0` (FTP) and `<Port>` to `22`. `Server.defaulting()` treats any falsy field as missing, so protocol `0` becomes `1` (SFTP). After that, `is_ftp` is true only for port 21 or a host containing `"ftp."`, which also matches `sftp.` hosts. Only `connect` calls `defaulting()`.
