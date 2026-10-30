@@ -7,7 +7,8 @@ FileZilla Companion is a CLI that reads FileZilla's saved sites (`sitemanager.xm
 ## Tech stack
 
 - Python. `requires-python >= 3.9`; the code uses no newer syntax (`typing.List`/`Optional`, no `X | Y` unions, no `match`). Keep it that way.
-- Packaging: `pyproject.toml` with the setuptools backend (>= 64, for PEP 660 editable installs), src layout, console script `filezilla-companion` → `filezilla_companion.__main__:run`. Dependencies are unpinned. No `requirements.txt`, no lockfile, no CI config.
+- Packaging: `pyproject.toml` with the setuptools backend (>= 64, for PEP 660 editable installs), src layout, console script `filezilla-companion` → `filezilla_companion.__main__:run`. Dependencies are unpinned. No `requirements.txt`, no lockfile.
+- CI: GitHub Actions. `.github/workflows/tests.flow.yml` holds the triggers (pushes to `main`/`develop`, every pull request) and the concurrency group, and includes `.github/workflows/tests.inc.yml`, which runs the test suite across `ubuntu-latest` and `windows-latest` × Python 3.9 to 3.14. When `requires-python` or a new Python release changes the supported range, update the matrix in `tests.inc.yml`.
 - Dependencies: `InquirerPy` (fuzzy menus), `colorama` (colored output), `pyperclip` (clipboard).
 - Standard library only otherwise: `argparse`, `abc`, `xml.etree`, `subprocess`, `shutil`, `base64`, `dataclasses`, `unittest`.
 
@@ -107,6 +108,7 @@ Checks a command needs (e.g. a working `ssh`) belong in its `run()`; only the si
 - Type hints on every function via `typing`; docstrings on public functions; comments explain why, not what.
 - OS branching that tests must exercise uses `platform.system()`. `sys.platform == "win32"` is only used to gate hardcoded Windows fallback paths in `ssh.find_ssh()` and `terminal.find_cmd()`.
 - Lookup tables are module constants: `ssh._WINDOWS_SSH_PATHS` (Windows ssh fallbacks) and `terminal._POSIX_TERMINALS` (ordered argv prefixes for terminal emulators).
+- GitHub Actions: when appropriate, put the jobs in a reusable workflow named `*.inc.yml` (`on: workflow_call`) and include it from a workflow named `*.flow.yml` that holds the triggers (e.g. `tests.inc.yml` is included in `tests.flow.yml`). Concurrency groups belong in the `*.flow.yml`: inside a called workflow, `github.workflow` is the caller's name, so the same group defined there would deadlock with the caller's.
 
 ## Testing
 
@@ -114,6 +116,7 @@ Checks a command needs (e.g. a working `ssh`) belong in its `run()`; only the si
 - Patching uses `mock.patch.object(<module>, "<attr>")` on imported modules (e.g. `mock.patch.object(terminal.subprocess, "Popen")`, `mock.patch.object(prompts, "select_server")`). Command modules call collaborators through their module (`ssh.connect`, `prompts.select_server`, `clipboard.copy`) so these patches take effect.
 - Tests never spawn processes, open menus, or read the real FileZilla config: they patch `subprocess.Popen`/`run`, `shutil.which`, `pyperclip.copy`/`clipboard.copy`, `inquirer.fuzzy`, `prompts.select_*`, `Console.setup`, `os.environ` (`mock.patch.dict`), and use `tempfile` for `sitemanager.xml` and fake home directories. Console output is asserted by patching `sys.stdout` with `io.StringIO`.
 - `test_windows_uses_appdata` is skipped outside Windows (`%VAR%` expansion only exists in `ntpath`).
+- CI runs the suite headless (no TTY, no display, no clipboard tool) on Linux and Windows with the oldest supported Python, so a test that relies on any of these, on the host OS, or on syntax newer than 3.9 fails there.
 
 Run a single test:
 
