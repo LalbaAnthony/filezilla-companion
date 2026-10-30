@@ -68,7 +68,11 @@ class MainTest(unittest.TestCase):
         self.assertEqual(app.main([]), 0)
 
         self.select_command.assert_called_once_with(COMMANDS)
-        self.command.run.assert_called_once_with(Context([Server("prod", "example.com", 22, 1, "deploy")]))
+        self.command.run.assert_called_once()
+        context = self.command.run.call_args.args[0]
+        self.assertIsInstance(context, Context)
+        self.assertEqual(context.sitemanager.path, self.path)
+        self.assertEqual(context.servers, [Server("prod", "example.com", 22, 1, "deploy")])
 
     def test_flag_skips_the_menu(self):
         self._write_sitemanager()

@@ -6,7 +6,7 @@ from filezilla_companion import prompts
 from filezilla_companion.commands import COMMANDS
 from filezilla_companion.commands.base import Command, Context
 from filezilla_companion.console import Console
-from filezilla_companion.filezilla.sitemanager import get_sitemanager_path, parse_sitemanager
+from filezilla_companion.filezilla.sitemanager import get_sitemanager_path, load_sitemanager
 
 def parse_args(argv: Optional[List[str]] = None) -> Optional[Command]:
     """Return the command requested with a `--<slug>` flag, or None when the user must pick one."""
@@ -30,16 +30,16 @@ def main(argv: Optional[List[str]] = None) -> int:
         Console.error("FileZilla sitemanager.xml not found. Please ensure FileZilla is installed and has saved at least one site.")
         return 1
 
-    servers = parse_sitemanager(sitemanager_path)
+    sitemanager = load_sitemanager(sitemanager_path)
 
-    if not servers:
+    if not sitemanager.servers:
         Console.error("No valid server found in the FileZilla site manager.")
         return 1
 
     if command is None:
         command = prompts.select_command(COMMANDS)
 
-    return command.run(Context(servers))
+    return command.run(Context(sitemanager))
 
 def run() -> int:
     """Console script entry point: keeps the window open on failure, so a double-clicked launch shows the error."""

@@ -3,9 +3,9 @@ import unittest
 from unittest import mock
 
 from colorama import Fore, Style
-from filezilla_companion.commands.base import Context
 from filezilla_companion.commands.list_servers import ListServersCommand
 from filezilla_companion.filezilla.server import Server
+from tests.helpers import make_context
 
 
 class ListServersCommandTest(unittest.TestCase):
@@ -17,7 +17,7 @@ class ListServersCommandTest(unittest.TestCase):
         ]
 
         with mock.patch("sys.stdout", new_callable=io.StringIO) as out:
-            self.assertEqual(ListServersCommand().run(Context(servers)), 0)
+            self.assertEqual(ListServersCommand().run(make_context(servers)), 0)
 
         self.assertEqual(
             out.getvalue(),

@@ -1,4 +1,6 @@
 import platform
+import sys
+import time
 from colorama import init as colorama_init, Fore, Style
 
 class Console:
@@ -8,6 +10,9 @@ class Console:
     SUCCESS = Fore.GREEN
     WARNING = Fore.YELLOW
     ERROR = Fore.RED
+
+    PROGRESS_INTERVAL = 5.0  # seconds between two progress lines when the output is not a terminal
+    _last_progress = 0.0
 
     @staticmethod
     def setup() -> None:
@@ -35,6 +40,21 @@ class Console:
     @classmethod
     def error(cls, message: str) -> None:
         print(cls.paint(cls.ERROR, message))
+
+    @classmethod
+    def progress(cls, message: str, done: bool = False) -> None:
+        """
+        Show a progress message. On a terminal, it rewrites the current line, and `done` ends that line.
+        Otherwise, so logs stay short, it prints at most one line per PROGRESS_INTERVAL, plus the `done` one.
+        """
+        if sys.stdout.isatty():
+            # Callers report growing counters, so a new message always covers the previous one.
+            print(f"\r{cls.paint(cls.INFO, message)}", end="\n" if done else "", flush=True)
+            return
+        now = time.monotonic()
+        if done or now - cls._last_progress >= cls.PROGRESS_INTERVAL:
+            cls._last_progress = now
+            cls.info(message)
 
     @classmethod
     def confirm(cls, question: str) -> bool:

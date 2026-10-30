@@ -2,30 +2,35 @@
 
 ## Overview
 
-FileZilla Companion is a CLI that reads FileZilla's saved sites (`sitemanager.xml`) and runs a command on them. The command is picked in a fuzzy-search menu at startup, or passed as a `--<slug>` flag to skip the menu. Commands: `connect` (pick a site, copy its password to the clipboard, open an SSH session in a new terminal window), `copy-password` (pick a site with a password, copy it), `list` (print every site). Supported platforms: Windows and Debian-family Linux.
+FileZilla Companion is a CLI that reads FileZilla's saved sites (`sitemanager.xml`) and runs a command on them. The command is picked in a fuzzy-search menu at startup, or passed as a `--<slug>` flag to skip the menu. Commands: `connect` (pick a site, copy its password to the clipboard, open an SSH session in a new terminal window), `copy-password` (pick a site with a password, copy it), `list` (print every site), `clean` (analyze the sites with pluggable criteria, then remove or rename the ones the user confirms in `sitemanager.xml`). Supported platforms: Windows and Debian-family Linux.
 
 ## Tech stack
 
 - Python. `requires-python >= 3.9`; the code uses no newer syntax (`typing.List`/`Optional`, no `X | Y` unions, no `match`). Keep it that way.
 - Packaging: `pyproject.toml` with the setuptools backend (>= 64, for PEP 660 editable installs), src layout, console script `filezilla-companion` → `filezilla_companion.__main__:run`. Dependencies are unpinned. No `requirements.txt`, no lockfile.
 - CI: GitHub Actions. `.github/workflows/tests.flow.yml` holds the triggers (pushes to `main`/`develop`, every pull request) and the concurrency group, and includes `.github/workflows/tests.inc.yml`, which runs the test suite across `ubuntu-24.04` and `windows-latest` × Python 3.9 to 3.14. Linux is pinned to `ubuntu-24.04` because `actions/setup-python` has no Python 3.9 build for Ubuntu 26.04 (`ubuntu-latest`); move it back to `ubuntu-latest` once 3.9 is dropped and every version in the matrix has a build for that image. When `requires-python` or a new Python release changes the supported range, update the matrix in `tests.inc.yml`.
-- Dependencies: `InquirerPy` (fuzzy menus), `colorama` (colored output), `pyperclip` (clipboard).
-- Standard library only otherwise: `argparse`, `abc`, `xml.etree`, `subprocess`, `shutil`, `base64`, `dataclasses`, `unittest`.
+- Dependencies: `InquirerPy` (fuzzy and checkbox menus), `colorama` (colored output), `paramiko` (SFTP login test, needs >= 3.2 for `PKey.from_path`), `pyperclip` (clipboard).
+- Standard library only otherwise: `argparse`, `abc`, `xml.etree`, `subprocess`, `shutil`, `base64`, `dataclasses`, `ftplib`, `ssl`, `socket`, `ipaddress`, `concurrent.futures`, `threading`, `unittest`.
 
 ## Structure
 
 - `src/filezilla_companion/__main__.py` — entry point: `parse_args()` (one `--<slug>` flag per command), `main(argv)` (loads the site manager, picks and runs the command), `run()` (console script target, pauses on failure).
 - `src/filezilla_companion/commands/__init__.py` — `COMMANDS`, the explicit registry; its order is the menu order, the first entry is preselected.
-- `src/filezilla_companion/commands/base.py` — `Command` ABC (`slug`, `label`, abstract `run(context) -> int`) and the `Context` dataclass (`servers`).
-- `src/filezilla_companion/commands/connect.py`, `copy_password.py`, `list_servers.py` — one `Command` subclass per module.
-- `src/filezilla_companion/filezilla/sitemanager.py` — locates and parses FileZilla's `sitemanager.xml` into `Server` objects.
-- `src/filezilla_companion/filezilla/server.py` — `Server` dataclass: display labels, SSH command string, protocol checks, defaults.
-- `src/filezilla_companion/prompts.py` — InquirerPy fuzzy menus: `select_server()`, `select_command()`.
+- `src/filezilla_companion/commands/base.py` — `Command` ABC (`slug`, `label`, abstract `run(context) -> int`) and the `Context` dataclass (`sitemanager`, plus a `servers` property).
+- `src/filezilla_companion/commands/connect.py`, `copy_password.py`, `list_servers.py`, `clean.py` — one `Command` subclass per module.
+- `src/filezilla_companion/criteria/__init__.py` — `CRITERIA`, the explicit registry of the `clean` criteria; its order is the menu, report and change list order.
+- `src/filezilla_companion/criteria/base.py` — `Criterion` ABC and its two families `GroupCriterion`/`SiteCriterion`, the `Finding` and `Action` (`Remove`, `Rename`) dataclasses, `Analysis` (sites + cached credential tests), `site_label()`.
+- `src/filezilla_companion/criteria/duplicates.py`, `failed_connection.py`, `divergent_passwords.py`, `missing_keyfile.py`, `no_credentials.py`, `duplicate_names.py`, `private_host.py` — one criterion per module.
+- `src/filezilla_companion/auth.py` — `check()` logs in to a site (SFTP via paramiko, FTP/FTPS via ftplib) and returns an `AuthResult`; `check_all()` runs it in parallel.
+- `src/filezilla_companion/filezilla/sitemanager.py` — locates FileZilla's `sitemanager.xml`; `load_sitemanager()` parses it into a `SiteManager` (path, XML tree, `Server` objects) that can `remove()`, `rename()` and `save()` with a backup.
+- `src/filezilla_companion/filezilla/server.py` — `Server` dataclass: display labels, SSH command string, protocol checks, defaults, and the `<Server>` element it comes from.
+- `src/filezilla_companion/filezilla/process.py` — `is_running()` tells whether FileZilla is running (`tasklist`/`pgrep`).
+- `src/filezilla_companion/prompts.py` — InquirerPy menus: fuzzy `select_server()`, `select_command()`; checkbox `select_criteria()`, `select_actions()`.
 - `src/filezilla_companion/ssh.py` — locates and checks the `ssh` client; `connect()` copies the password and opens the session.
 - `src/filezilla_companion/terminal.py` — locates `cmd.exe` and terminal emulators; `open_in_terminal()` runs a shell command in a new window.
 - `src/filezilla_companion/clipboard.py` — `copy()`, which raises `ClipboardError` so callers do not depend on pyperclip.
-- `src/filezilla_companion/console.py` — `Console`: colored output (`info`/`success`/`warning`/`error`) and a Y/n prompt.
-- `tests/` — unittest package mirroring the source tree: `tests/test_<module>.py`, `tests/commands/test_<module>.py`, `tests/filezilla/test_<module>.py`, plus `tests/commands/test_registry.py` for `COMMANDS`.
+- `src/filezilla_companion/console.py` — `Console`: colored output (`info`/`success`/`warning`/`error`), an in-place `progress()` line and a Y/n prompt.
+- `tests/` — unittest package mirroring the source tree: `tests/test_<module>.py`, `tests/commands/test_<module>.py`, `tests/criteria/test_<module>.py`, `tests/filezilla/test_<module>.py`, plus `tests/commands/test_registry.py` for `COMMANDS`, `tests/criteria/test_registry.py` for `CRITERIA`, and `tests/helpers.py` (`make_context()`).
 
 Imports are absolute (`from filezilla_companion.console import Console`).
 
@@ -50,7 +55,7 @@ Run (interactive without a flag, needs a TTY):
 
 ```sh
 # Windows
-filezilla-companion [--connect | --copy-password | --list]
+filezilla-companion [--connect | --copy-password | --list | --clean]
 python -m filezilla_companion [...]   # when Python's Scripts directory is not on PATH
 
 # Debian
@@ -75,9 +80,9 @@ Single process, linear flow in `main()` (`src/filezilla_companion/__main__.py`):
 
 1. `parse_args()` builds a mutually exclusive group with one `store_const` flag per `COMMANDS` entry; the flag stores the `Command` instance itself. Invalid usage exits with code 2 from argparse, without the failure pause.
 2. `Console.setup()` initializes colorama.
-3. `get_sitemanager_path()` then `parse_sitemanager()` collect every `<Server>` element at any depth (folders included). Entries without `Host` or `User` are skipped with a warning. `<Pass>` is base64-decoded; the raw text is kept if decoding fails. A missing file or an empty result aborts before any command runs.
+3. `get_sitemanager_path()` then `load_sitemanager()` collect every `<Server>` element at any depth (folders included). Entries without `Host` or `User` are skipped with a warning (they stay in the file). `<Pass>` is base64-decoded; the raw text is kept if decoding fails. Each `Server` keeps its element in `Server.element`. A missing file or an empty result aborts before any command runs.
 4. Without a flag, `prompts.select_command(COMMANDS)` shows the menu; labels include the flag (`Connect to a server (--connect)`).
-5. `command.run(Context(servers))` returns the exit code.
+5. `command.run(Context(sitemanager))` returns the exit code.
 
 Commands:
 
@@ -87,10 +92,39 @@ Commands:
   - POSIX otherwise: `subprocess.run(command, shell=True)` in the current terminal (blocks until ssh exits).
 - `CopyPasswordCommand` (`--copy-password`): menu limited to servers with a password, FTP included, no `defaulting()`. No such server, or a `ClipboardError`, is an error (exit 1).
 - `ListServersCommand` (`--list`): prints every server as `name (user@host:port)`, or `user@host:port` without a name, FTP included. Never fails.
+- `CleanCommand` (`--clean`):
+  1. `prompts.select_criteria(CRITERIA)` (checkbox, all checked, at least one required).
+  2. Each selected criterion's `evaluate(Analysis(servers))` returns `Finding`s (title, sites, proposed `Action`s, `keep_one`). Everything is analyzed before any question.
+  3. Report: per criterion, `label: summary` then each finding's title and sites.
+  4. `_merge_actions()` builds one section per criterion. An action proposed by several criteria (same site, same `Action` type) is listed once, under the first criterion in `CRITERIA` order, with the reasons joined and checked if any criterion checks it. No action at all: exit 0.
+  5. `prompts.select_actions()` (checkbox, preset to each `Action.checked`). Renames of removed sites are ignored; renames whose name no longer collides once removals are applied are dropped and reported.
+  6. Recap with counts, plus a warning for every `keep_one` finding whose sites are all removed (duplicates, divergent passwords).
+  7. `process.is_running()`: a warning if FileZilla runs or cannot be checked, then `Console.confirm()`. Declining exits 0 without writing.
+  8. `SiteManager.remove()`/`rename()`, then `save()`: `sitemanager.<YYYYmmdd-HHMMSS>.xml.bak` copy (with a `-N` suffix if taken), write to `sitemanager.xml.tmp`, `os.replace`. An `OSError` there is exit 1.
+
+Criteria (`CRITERIA` order) and what they propose:
+
+| Slug                  | Family | Match                                                                               | Action                                                                                     |
+| --------------------- | ------ | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `duplicates`          | group  | same `normalized_host`, user, password, port, keyfile                               | `Remove` every copy, checked, except the most complete one (first on a tie), unchecked     |
+| `failed-connection`   | site   | every `AuthResult` other than `OK`, grouped by `reason`                             | `Remove` checked; unchecked for a private host; nothing for `UNTESTABLE`                   |
+| `divergent-passwords` | group  | same `normalized_host`, user, port, more than one password; key file sites excluded | `Remove` each site, checked only if it failed while another site of the group logged in    |
+| `missing-keyfile`     | site   | `uses_keyfile` and no keyfile set or file missing                                   | `Remove` checked                                                                           |
+| `no-credentials`      | site   | logon type normal or unset, no password, not `uses_keyfile`                         | `Remove` checked                                                                           |
+| `duplicate-names`     | group  | same name, at least two different `user@host:port`                                  | `Rename` to `name (user@host)`, or `name (user@host:port)`, avoiding names in use; checked |
+| `private-host`        | site   | `localhost`, or a private, loopback or link-local IP literal (no DNS lookup)        | none (report only)                                                                         |
+
+Credential tests (`auth.check()`), shared through `Analysis.check_credentials()`/`auth_result()` and cached per site (`id()`):
+
+- SFTP (protocol 1): `paramiko.Transport` over `socket.create_connection`, `start_client`, then `auth_publickey` (logon type 5, or unset with a keyfile) or `auth_password` (falls back to keyboard-interactive). Host keys are not checked. Partial authentication counts as `OK`.
+- FTP: protocol 0 tries `AUTH TLS` and falls back to plain FTP like FileZilla, 4 requires TLS, 3 is implicit TLS (`_ImplicitFTPTLS`), 6 is plain. Certificates are not checked. Login through `login(..., secure=False)` so `FTP_TLS` does not resend `AUTH TLS`.
+- Not tested (`UNTESTABLE`, before any connection): other protocols, logon types 2/3/4/6+, no password, anonymous SFTP, key logon over FTP, missing/`.ppk`/passphrase-protected key.
+- Exceptions map to `REJECTED` (paramiko `AuthenticationException`, FTP `error_perm` at login), `HOST_NOT_FOUND` (`gaierror`), `TIMEOUT`, `REFUSED`, and `ERROR` for the rest, unexpected exceptions included, so one server cannot abort the run.
+- `check_all()`: `ThreadPoolExecutor(DEFAULT_WORKERS = 16)`, one task per `normalized_host` testing its sites sequentially (no login bursts on a shared host), `DEFAULT_TIMEOUT = 10` s per step. `on_progress(done, failed)` runs under a lock; `Analysis` prints it with `Console.progress()`. On an exception (Ctrl+C included), pending hosts are cancelled.
 
 The password is never passed to `ssh`; the user pastes it at the ssh prompt. `run()` waits for Enter only when the exit code is not 0; a double-clicked launch of `--list` or `--copy-password` closes its window on success.
 
-Module dependencies (all under `filezilla_companion`): `__main__` → `commands`, `prompts`, `console`, `filezilla.sitemanager`; `commands.*` → `commands.base`, `console`, and as needed `prompts`, `ssh`, `clipboard`; `ssh` → `clipboard`, `terminal`, `console`, `filezilla.server`; `terminal` → `console`; `filezilla.sitemanager` → `console`, `filezilla.server`; `prompts` → `filezilla.server` (imports `commands.base` only under `TYPE_CHECKING`, see Gotchas); `filezilla.server`, `clipboard` and `console` have no internal dependency.
+Module dependencies (all under `filezilla_companion`): `__main__` → `commands`, `prompts`, `console`, `filezilla.sitemanager`; `commands.base` → `filezilla.sitemanager`, `filezilla.server`; `commands.*` → `commands.base`, `console`, and as needed `prompts`, `ssh`, `clipboard`, `criteria`, `filezilla.process`; `criteria.*` → `criteria.base`, `auth`, `filezilla.server`; `criteria.base` → `auth`, `console`, `filezilla.server`; `auth` → `filezilla.server`; `ssh` → `clipboard`, `terminal`, `console`, `filezilla.server`; `terminal` → `console`; `filezilla.sitemanager` → `console`, `filezilla.server`; `prompts` → `filezilla.server` (imports `commands.base` and `criteria.base` only under `TYPE_CHECKING`, see Gotchas); `filezilla.server`, `filezilla.process`, `clipboard` and `console` have no internal dependency.
 
 ## Adding a command
 
@@ -100,21 +134,35 @@ Module dependencies (all under `filezilla_companion`): `__main__` → `commands`
 
 Checks a command needs (e.g. a working `ssh`) belong in its `run()`; only the site manager loading is shared, through `Context`. Data shared by several commands goes in `Context` instead of a new `run()` parameter.
 
+## Adding a criterion
+
+1. Create `src/filezilla_companion/criteria/<name>.py` with a subclass setting `slug` (kebab-case) and `label` (menu and report heading):
+   - `GroupCriterion` for sites sharing something: implement `key(server)` (None leaves the site out), `describe(group)` (finding title) and `resolve(group, analysis)` (actions); override `is_group()` when sharing the key is not enough, `prepare(servers, analysis)` to compute something for every grouped site at once, and set `keep_one = True` when removing a whole group deserves a warning.
+   - `SiteCriterion` for a check on each site: implement `check(server, analysis)` returning a reason or None (sites are grouped by reason); override `propose()` to change the default checked `Remove` (return None for report-only), and `prepare(analysis)` for batch work.
+   - `Criterion` directly only when neither fits: implement `evaluate()` and `summary()`.
+2. Add an instance to `CRITERIA` in `criteria/__init__.py`. Its position sets the menu, report and change list order, and which section lists a change proposed by several criteria.
+3. Add `tests/criteria/test_<name>.py`. `tests/criteria/test_registry.py` already enforces unique kebab-case slugs and non-empty labels.
+
+A criterion needing credential tests calls `analysis.check_credentials(servers)` in `prepare()` (one parallel pass with progress), then `analysis.auth_result(server)`; a criterion listed after `failed-connection` reuses its results. Results computed for several criteria go in `Analysis` rather than on the criterion: `CRITERIA` holds shared instances. New action kinds subclass `Action` (dataclass with a `label` property) and need handling in `CleanCommand.run()`.
+
 ## Conventions
 
 - All user-facing output goes through `Console.info`/`success`/`warning`/`error`, not bare `print`.
 - Fatal errors inside a command: `Console.error(...)` then `return 1` from `run()`. `main()` does the same for the shared site manager checks. Session launch failures in `ssh.connect()`/`terminal.open_in_terminal()` raise `OSError` (including `FileNotFoundError`) and are caught in `ConnectCommand.run()`.
-- Modules wrapping a third-party library expose their own exception (`clipboard.ClipboardError`) so callers do not import the library.
+- Modules wrapping a third-party library expose their own exception (`clipboard.ClipboardError`) or result type (`auth.AuthResult`) so callers do not import the library.
 - Type hints on every function via `typing`; docstrings on public functions; comments explain why, not what.
 - OS branching that tests must exercise uses `platform.system()`. `sys.platform == "win32"` is only used to gate hardcoded Windows fallback paths in `ssh.find_ssh()` and `terminal.find_cmd()`.
-- Lookup tables are module constants: `ssh._WINDOWS_SSH_PATHS` (Windows ssh fallbacks) and `terminal._POSIX_TERMINALS` (ordered argv prefixes for terminal emulators).
+- Lookup tables are module constants: `ssh._WINDOWS_SSH_PATHS` (Windows ssh fallbacks), `terminal._POSIX_TERMINALS` (ordered argv prefixes for terminal emulators), `auth._UNSUPPORTED_LOGONTYPES`, `duplicate_names._SUFFIXES`.
 - GitHub Actions: when appropriate, put the jobs in a reusable workflow named `*.inc.yml` (`on: workflow_call`) and include it from a workflow named `*.flow.yml` that holds the triggers (e.g. `tests.inc.yml` is included in `tests.flow.yml`). Concurrency groups belong in the `*.flow.yml`: inside a called workflow, `github.workflow` is the caller's name, so the same group defined there would deadlock with the caller's.
 
 ## Testing
 
 - Framework: standard library `unittest` and `unittest.mock`. `tests/` and its subdirectories are packages (`__init__.py`), so `python -m unittest` discovers them from the repository root and imports `filezilla_companion` from the editable install.
 - Patching uses `mock.patch.object(<module>, "<attr>")` on imported modules (e.g. `mock.patch.object(terminal.subprocess, "Popen")`, `mock.patch.object(prompts, "select_server")`). Command modules call collaborators through their module (`ssh.connect`, `prompts.select_server`, `clipboard.copy`) so these patches take effect.
-- Tests never spawn processes, open menus, or read the real FileZilla config: they patch `subprocess.Popen`/`run`, `shutil.which`, `pyperclip.copy`/`clipboard.copy`, `inquirer.fuzzy`, `prompts.select_*`, `Console.setup`, `os.environ` (`mock.patch.dict`), and use `tempfile` for `sitemanager.xml` and fake home directories. Console output is asserted by patching `sys.stdout` with `io.StringIO`.
+- Tests never spawn processes, open menus, open network connections, or read the real FileZilla config: they patch `subprocess.Popen`/`run`, `shutil.which`, `pyperclip.copy`/`clipboard.copy`, `inquirer.fuzzy`/`checkbox`, `prompts.select_*`, `Console.setup`, `os.environ` (`mock.patch.dict`), `auth.check` (criteria and `Analysis` tests), `auth.socket.create_connection`, `auth.paramiko.Transport`, `auth.ftplib.FTP`/`FTP_TLS`, `auth._ImplicitFTPTLS`, `process.subprocess.run`, and use `tempfile` for `sitemanager.xml`, key files and fake home directories. Console output is asserted by patching `sys.stdout` with `io.StringIO`.
+- Commands get their `Context` from `tests.helpers.make_context(servers)` (in-memory site manager); `CleanCommand` tests load a real temporary `sitemanager.xml` instead, since they check what is written.
+- Key file tests generate keys with `cryptography` (a paramiko dependency); the `.ppk` test only needs the file header.
+- `Console.progress()` throttles non-terminal output through the class attribute `Console._last_progress`, which outlives a test: tests asserting progress lines patch it to `0.0`.
 - `test_windows_uses_appdata` is skipped outside Windows (`%VAR%` expansion only exists in `ntpath`).
 - CI runs the suite headless (no TTY, no display, no clipboard tool) on Linux and Windows with the oldest supported Python, so a test that relies on any of these, on the host OS, or on syntax newer than 3.9 fails there.
 
@@ -140,18 +188,24 @@ No `.env` or `.env.example`; nothing to configure. Variables read at runtime:
 
 Linux `sitemanager.xml` lookup order: `~/.filezilla/`, `$XDG_CONFIG_HOME/filezilla/`, `~/.var/app/org.filezillaproject.Filezilla/config/filezilla/` (Flatpak). If none exists, the XDG path is returned and `main()` reports it as not found.
 
-External dependencies: an OpenSSH client for `connect` (PATH first; on Windows also `Sysnative`/`System32\OpenSSH`, Git for Windows, `Program Files\OpenSSH`); a FileZilla `sitemanager.xml` with at least one site; on Linux, `xclip` or `wl-clipboard` for the clipboard copy (optional for `connect`, required for `copy-password`).
+External dependencies: an OpenSSH client for `connect` (PATH first; on Windows also `Sysnative`/`System32\OpenSSH`, Git for Windows, `Program Files\OpenSSH`); a FileZilla `sitemanager.xml` with at least one site; on Linux, `xclip` or `wl-clipboard` for the clipboard copy (optional for `connect`, required for `copy-password`); network access to the servers for the `failed-connection` and `divergent-passwords` criteria of `clean`; `tasklist` (Windows) or `pgrep` (Linux) to detect a running FileZilla before `clean` writes (optional: without it, `clean` warns that it cannot tell).
 
 ## Gotchas
 
 - The package must be installed (`pip install -e .`) for the app and the tests to import it: absolute imports need `filezilla_companion` on `sys.path`, which neither `src/` nor the repository root provides on its own.
-- `prompts.py` imports `Command` only under `TYPE_CHECKING`: command modules import `prompts`, so a runtime import of `commands.base` from `prompts` would run `commands/__init__.py`, which imports the command modules back while `prompts` is half-initialized.
+- `prompts.py` imports `Command` only under `TYPE_CHECKING`: command modules import `prompts`, so a runtime import of `commands.base` from `prompts` would run `commands/__init__.py`, which imports the command modules back while `prompts` is half-initialized. `Action` and `Criterion` are imported the same way for consistency, and so `prompts` does not load paramiko.
 - Command modules are named so they do not shadow builtins in `commands/__init__.py` (`list_servers.py`, not `list.py`): importing a submodule binds its name in the package namespace.
 - A command slug must not be `help`: argparse already defines `--help`, and building the parser would fail.
 - Command menus and flags hold the `COMMANDS` instances themselves; tests that patch a command's `run` patch that shared instance (`mock.patch.object(COMMANDS[i], "run")`).
 - The interactive menus need a TTY, and the failure path blocks on `input()`. `--list` against a fake `%APPDATA%`/`$XDG_CONFIG_HOME` is the only non-interactive smoke run; otherwise validate changes with the test suite.
 - `Server.command` returns one shell string, not an argv list. It runs through `cmd.exe` on Windows and `sh` on POSIX, and only the keyfile path is quoted. Changes must stay valid for both shells; `tests/test_ssh.py` and `tests/test_terminal.py` assert the exact strings.
-- Protocol handling: `parse_sitemanager()` defaults a missing `<Protocol>` to `0` (FTP) and `<Port>` to `22`. `Server.defaulting()` treats any falsy field as missing, so protocol `0` becomes `1` (SFTP). After that, `is_ftp` is true only for port 21 or a host containing `"ftp."`, which also matches `sftp.` hosts. Only `connect` calls `defaulting()`.
+- Protocol handling: `load_sitemanager()` defaults a missing `<Protocol>` to `0` (FTP) and `<Port>` to `22`. `Server.defaulting()` treats any falsy field as missing, so protocol `0` becomes `1` (SFTP). After that, `is_ftp` is true only for port 21 or a host containing `"ftp."`, which also matches `sftp.` hosts. Only `connect` calls `defaulting()`.
+- FileZilla protocols go beyond 0/1 (2 = HTTP, 3 = implicit FTPS, 4 = explicit FTPS, 5 = HTTPS, 6 = plain FTP, then cloud storage). `Server.is_ftp`/`is_sftp` assert `protocol in (0, 1)` and raise `AssertionError` on the others, so `connect` fails on such a site. The `clean` code never calls them: `auth` reads `Server.protocol` directly.
+- `Server` is a dataclass with value equality (`element` is excluded), and copies of a site compare equal; it is also unhashable. Code that tracks particular sites (`SiteManager.remove()`, `Analysis` cache, `CleanCommand` sets) matches them by `id()`, never with `==`, `in` or `list.remove()`.
+- `SiteManager.save()` rewrites the whole file through ElementTree: the XML declaration becomes `<?xml version='1.0' encoding='UTF-8'?>` and XML comments are dropped; elements, attributes and whitespace are kept. Unparsed `<Server>` entries (no host or user) are kept, and folders emptied by removals stay.
+- FileZilla's Site Manager writes `sitemanager.xml` from its own copy when it closes with OK, which would undo a `clean` written while it was open; hence the `process.is_running()` warning.
+- `auth` adds a `NullHandler` to the `paramiko` logger at import: paramiko logs transport errors from its threads, and without a handler Python's last-resort handler prints them on stderr, across the progress line.
+- `failed-connection` sends every saved password to its server (no host key or certificate check, plain FTP fallback for protocol 0), and failed logins can trigger fail2ban or account lockouts. Never run it against the real FileZilla config from a test or a smoke run.
 - `Server` invariants are enforced with `assert`, which `python -O` strips.
 - The clipboard copy happens before the session launch on purpose: the POSIX no-GUI fallback blocks until ssh exits.
 - On Windows, `cmd` must get its own console (`terminal._CREATE_NEW_CONSOLE`). A plain `Popen` attaches it to the caller's console: the app exits, the calling shell shows its prompt again, and the shell and ssh both read the keyboard, so a pasted password lands at the shell prompt (and in its history if Enter is pressed). The flag is a hardcoded value because `subprocess.CREATE_NEW_CONSOLE` does not exist outside Windows, where CI also runs the Windows branch.

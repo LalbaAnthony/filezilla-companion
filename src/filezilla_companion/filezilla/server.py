@@ -1,4 +1,5 @@
-from dataclasses import dataclass
+import xml.etree.ElementTree as ET
+from dataclasses import dataclass, field
 from typing import List, Optional
 
 server_default_port = 22
@@ -13,6 +14,24 @@ class Server:
     user: str
     password: Optional[str] = None
     keyfile: Optional[str] = None
+    logontype: Optional[int] = None  # 0 = anonymous, 1 = normal, 2 = ask for password, 3 = interactive, 4 = account, 5 = key file
+    comments: str = ""
+    colour: int = 0
+    remote_dir: str = ""
+    local_dir: str = ""
+    # The <Server> element the site was parsed from, so the site manager can change it. Not part of the site's identity.
+    element: Optional[ET.Element] = field(default=None, compare=False, repr=False)
+
+    @property
+    def normalized_host(self) -> str:
+        """Return the host as compared between sites: host names are case-insensitive."""
+        return self.host.strip().lower()
+
+    @property
+    def uses_keyfile(self) -> bool:
+        """Check if the site logs in with its key file, which FileZilla ignores under any other logon type."""
+        # Without a logon type (files not written by FileZilla), a key file is taken as the way to log in.
+        return self.logontype == 5 or (self.logontype is None and bool(self.keyfile))
 
     @property
     def fullhost(self) -> str:

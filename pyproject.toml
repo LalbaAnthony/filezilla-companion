@@ -6,12 +6,13 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "filezilla-companion"
 version = "0.1.0"
-description = "Act on the sites saved in FileZilla's site manager: open SSH sessions, copy passwords, list servers."
+description = "Act on the sites saved in FileZilla's site manager: open SSH sessions, copy passwords, list servers, clean up sites."
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
     "InquirerPy",
     "colorama",
+    "paramiko",
     "pyperclip",
 ]
 

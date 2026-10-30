@@ -3,9 +3,9 @@ import unittest
 from unittest import mock
 
 from filezilla_companion import prompts, ssh
-from filezilla_companion.commands.base import Context
 from filezilla_companion.commands.connect import ConnectCommand
 from filezilla_companion.filezilla.server import Server
+from tests.helpers import make_context
 
 
 def _server() -> Server:
@@ -27,7 +27,7 @@ class ConnectCommandTest(unittest.TestCase):
 
     def _run(self, server: Server) -> int:
         self.select_server.return_value = server
-        return ConnectCommand().run(Context([server]))
+        return ConnectCommand().run(make_context([server]))
 
     def test_connects_to_the_selected_server(self):
         server = _server()
