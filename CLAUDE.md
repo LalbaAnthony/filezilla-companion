@@ -8,7 +8,7 @@ FileZilla Companion is a CLI that reads FileZilla's saved sites (`sitemanager.xm
 
 - Python. `requires-python >= 3.9`; the code uses no newer syntax (`typing.List`/`Optional`, no `X | Y` unions, no `match`). Keep it that way.
 - Packaging: `pyproject.toml` with the setuptools backend (>= 64, for PEP 660 editable installs), src layout, console script `filezilla-companion` → `filezilla_companion.__main__:run`. Dependencies are unpinned. No `requirements.txt`, no lockfile.
-- CI: GitHub Actions. `.github/workflows/tests.flow.yml` holds the triggers (pushes to `main`/`develop`, every pull request) and the concurrency group, and includes `.github/workflows/tests.inc.yml`, which runs the test suite across `ubuntu-latest` and `windows-latest` × Python 3.9 to 3.14. When `requires-python` or a new Python release changes the supported range, update the matrix in `tests.inc.yml`.
+- CI: GitHub Actions. `.github/workflows/tests.flow.yml` holds the triggers (pushes to `main`/`develop`, every pull request) and the concurrency group, and includes `.github/workflows/tests.inc.yml`, which runs the test suite across `ubuntu-24.04` and `windows-latest` × Python 3.9 to 3.14. Linux is pinned to `ubuntu-24.04` because `actions/setup-python` has no Python 3.9 build for Ubuntu 26.04 (`ubuntu-latest`); move it back to `ubuntu-latest` once 3.9 is dropped and every version in the matrix has a build for that image. When `requires-python` or a new Python release changes the supported range, update the matrix in `tests.inc.yml`.
 - Dependencies: `InquirerPy` (fuzzy menus), `colorama` (colored output), `pyperclip` (clipboard).
 - Standard library only otherwise: `argparse`, `abc`, `xml.etree`, `subprocess`, `shutil`, `base64`, `dataclasses`, `unittest`.
 
