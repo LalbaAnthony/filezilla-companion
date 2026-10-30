@@ -84,18 +84,43 @@ class MainTest(unittest.TestCase):
         self.select_command.assert_not_called()
         run.assert_called_once()
 
-    def test_missing_sitemanager_aborts(self):
-        self.assertEqual(app.main([]), 1)
+    def test_missing_sitemanager_offers_only_the_commands_without_sites(self):
+        self.assertEqual(app.main([]), 0)
 
         self.assertIn("FileZilla sitemanager.xml not found", self.stdout.getvalue())
-        self.select_command.assert_not_called()
+        self.assertIn("Only the commands that work without saved sites are offered.", self.stdout.getvalue())
+        self.select_command.assert_called_once_with([cmd for cmd in COMMANDS if not cmd.requires_servers])
+        context = self.command.run.call_args.args[0]
+        self.assertEqual(context.sitemanager.path, self.path)
+        self.assertEqual(context.servers, [])
+        self.assertFalse(os.path.exists(self.path))
 
-    def test_no_valid_server_aborts(self):
+    def test_no_valid_server_offers_only_the_commands_without_sites(self):
         self._write_sitemanager("<FileZilla3><Servers/></FileZilla3>")
 
-        self.assertEqual(app.main([]), 1)
+        self.assertEqual(app.main([]), 0)
 
         self.assertIn("No valid server found", self.stdout.getvalue())
+        self.select_command.assert_called_once_with([cmd for cmd in COMMANDS if not cmd.requires_servers])
+
+    def test_flag_of_a_command_needing_sites_aborts_without_sites(self):
+        command = next(cmd for cmd in COMMANDS if cmd.requires_servers)
+
+        with mock.patch.object(command, "run") as run:
+            self.assertEqual(app.main([f"--{command.slug}"]), 1)
+
+        self.assertIn("FileZilla sitemanager.xml not found", self.stdout.getvalue())
+        run.assert_not_called()
+        self.select_command.assert_not_called()
+
+    def test_flag_of_a_command_without_sites_runs_without_the_file(self):
+        command = next(cmd for cmd in COMMANDS if not cmd.requires_servers)
+
+        with mock.patch.object(command, "run", return_value=0) as run:
+            self.assertEqual(app.main([f"--{command.slug}"]), 0)
+
+        self.assertNotIn("not found", self.stdout.getvalue())
+        self.assertEqual(run.call_args.args[0].servers, [])
         self.select_command.assert_not_called()
 
 
