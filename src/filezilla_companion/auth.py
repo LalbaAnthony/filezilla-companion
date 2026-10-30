@@ -1,10 +1,10 @@
 import ftplib
 import logging
 import os
+import queue
 import socket
 import ssl
 import threading
-from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from enum import Enum
 from typing import Callable, Dict, List, Optional, Tuple
@@ -13,6 +13,7 @@ from filezilla_companion.filezilla.server import Server
 
 DEFAULT_WORKERS = 16
 DEFAULT_TIMEOUT = 10.0  # seconds, for each network step (connection, handshake, login)
+_POLL_INTERVAL = 0.1  # seconds between two checks for Ctrl+C while check_all() waits for the tests
 
 # paramiko logs transport errors (e.g. an unreadable banner) from its own threads. Without a handler, Python prints
 # them on stderr, across the progress line, although they are already reported in the results.
@@ -116,40 +117,71 @@ def check_all(
     """
     Test the servers in parallel and return their results in the same order. The sites of a host are tested one
     at a time, so hosts serving many sites do not see a burst of logins (fail2ban, account lockout).
-    `on_progress(done, failed)` is called after each result.
+    `on_progress(done, failed)` is called after each result. On Ctrl+C or a failing callback, the exception is raised
+    without waiting for the tests in progress, which then end in the background without reporting.
     """
     by_host: Dict[str, List[int]] = {}
     for index, srv in enumerate(servers):
         by_host.setdefault(srv.normalized_host, []).append(index)
+    hosts: "queue.SimpleQueue[List[int]]" = queue.SimpleQueue()
+    for indexes in by_host.values():
+        hosts.put(indexes)
 
     results: Dict[int, AuthResult] = {}
+    errors: List[BaseException] = []
     lock = threading.Lock()
     stop = threading.Event()
+    ended = threading.Semaphore(0)  # released by each thread on its way out
     done = 0
     failed = 0
 
-    def test_host(indexes: List[int]) -> None:
+    def test_hosts() -> None:
         nonlocal done, failed
-        for index in indexes:
-            if stop.is_set():
-                return
-            result = check(servers[index], timeout)
-            with lock:
-                results[index] = result
-                done += 1
-                failed += result.failed
-                on_progress(done, failed)
+        try:
+            while True:
+                try:
+                    indexes = hosts.get_nowait()
+                except queue.Empty:
+                    return
+                for index in indexes:
+                    if stop.is_set():
+                        return
+                    result = check(servers[index], timeout)
+                    with lock:
+                        # Checked again: check_all() may have given up during the test.
+                        if stop.is_set():
+                            return
+                        results[index] = result
+                        done += 1
+                        failed += result.failed
+                        on_progress(done, failed)
+        except BaseException as e:
+            # Raised again by check_all(), in the caller's thread.
+            errors.append(e)
+            stop.set()
+        finally:
+            ended.release()
 
-    pool = ThreadPoolExecutor(max_workers=workers)
+    # Daemon threads, unlike ThreadPoolExecutor's: Python exits without waiting for the tests in progress, which
+    # can each last several timeouts (connection, handshake, login).
+    threads = [threading.Thread(target=test_hosts, daemon=True) for _ in range(min(workers, len(by_host)))]
     try:
-        for future in [pool.submit(test_host, indexes) for indexes in by_host.values()]:
-            future.result()
+        for thread in threads:
+            thread.start()
+        for _ in threads:
+            # Timed waits: on Windows, Ctrl+C does not interrupt a wait without timeout. Not Thread.join(): on some
+            # Python versions (3.10 at least), interrupting it marks the thread as stopped while it still runs.
+            while not ended.acquire(timeout=_POLL_INTERVAL):
+                pass
+            if errors:
+                break
     except BaseException:
-        # On Ctrl+C or a failing callback, stop starting tests instead of waiting for every remaining host.
-        stop.set()
-        pool.shutdown(wait=False, cancel_futures=True)
+        # Under the lock, so no progress line is printed once the caller handles the exception.
+        with lock:
+            stop.set()
         raise
-    pool.shutdown()
+    if errors:
+        raise errors[0]
     return [results[index] for index in range(len(servers))]
 
 def _password_credentials(server: Server) -> Tuple[str, str]:

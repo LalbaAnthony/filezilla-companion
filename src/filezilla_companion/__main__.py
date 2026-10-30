@@ -8,6 +8,8 @@ from filezilla_companion.commands.base import Command, Context
 from filezilla_companion.console import Console
 from filezilla_companion.filezilla.sitemanager import empty_sitemanager, get_sitemanager_path, load_sitemanager
 
+EXIT_INTERRUPTED = 130  # 128 + SIGINT, the shell convention for a program stopped by Ctrl+C
+
 def parse_args(argv: Optional[List[str]] = None) -> Optional[Command]:
     """Return the command requested with a `--<slug>` flag, or None when the user must pick one."""
     parser = argparse.ArgumentParser(
@@ -48,10 +50,24 @@ def main(argv: Optional[List[str]] = None) -> int:
     return command.run(Context(sitemanager))
 
 def run() -> int:
-    """Console script entry point: keeps the window open on failure, so a double-clicked launch shows the error."""
-    exit_code = main()
+    """
+    Console script entry point: keeps the window open on failure, so a double-clicked launch shows the error, and
+    turns Ctrl+C into a message instead of a traceback.
+    """
+    try:
+        exit_code = main()
+    except KeyboardInterrupt:
+        # No pause: Ctrl+C means quit, not another key press to close the window. The leading newline ends the line
+        # ^C was pressed on, e.g. a question or the progress line.
+        Console.warning("\nInterrupted.")
+        return EXIT_INTERRUPTED
     if exit_code != 0:
-        input("Press Enter to exit...")
+        try:
+            input("Press Enter to exit...")
+        except KeyboardInterrupt:
+            # Ctrl+C closes the window like Enter does; the failure stays the exit code. The newline keeps the
+            # shell prompt off the pause line.
+            print()
     return exit_code
 
 if __name__ == "__main__":

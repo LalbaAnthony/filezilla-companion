@@ -1,3 +1,4 @@
+import _thread
 import ftplib
 import os
 import socket
@@ -319,6 +320,37 @@ class CheckAllTest(unittest.TestCase):
         with mock.patch.object(auth, "check", return_value=AuthResult(AuthStatus.OK)), \
                 self.assertRaises(RuntimeError):
             auth.check_all([_server()], 1, 10.0, mock.Mock(side_effect=RuntimeError("stop")))
+
+    def test_ctrl_c_raises_without_waiting_for_the_test_in_progress(self):
+        servers = [_server(name=str(i), host=f"host{i}.example") for i in range(2)]
+        release = threading.Event()
+        returned = threading.Event()
+        workers = []
+        progress = mock.Mock()
+
+        def check(srv, timeout):
+            workers.append(threading.current_thread())
+            # Once check_all() waits for the tests: an earlier interrupt would not exercise that wait.
+            time.sleep(0.2)
+            # What Ctrl+C does to the main thread.
+            _thread.interrupt_main()
+            # Bounded, so a check_all() that waits for this test fails the assertions below instead of hanging.
+            release.wait(5)
+            returned.set()
+            return AuthResult(AuthStatus.OK)
+
+        with mock.patch.object(auth, "check", side_effect=check) as check_:
+            with self.assertRaises(KeyboardInterrupt):
+                auth.check_all(servers, 1, 10.0, progress)
+            self.assertFalse(returned.is_set())
+            release.set()
+            workers[0].join(5)
+            self.assertFalse(workers[0].is_alive())
+
+        # Daemon, so Python exits without waiting for it; the queued host is never tested.
+        self.assertTrue(workers[0].daemon)
+        self.assertEqual(check_.call_count, 1)
+        progress.assert_not_called()
 
 
 if __name__ == "__main__":

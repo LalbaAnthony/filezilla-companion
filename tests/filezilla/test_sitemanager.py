@@ -249,20 +249,35 @@ class SiteManagerTest(unittest.TestCase):
         with open(taken, encoding="utf-8") as f:
             self.assertEqual(f.read(), "older backup")
 
-    def test_failed_write_leaves_the_file_unchanged(self):
+    def test_failed_or_interrupted_write_leaves_the_file_unchanged(self):
         self.sitemanager.remove(self.sitemanager.servers)
 
-        def write_partially(file, **kwargs):
-            file.write(b"<FileZilla3>")
-            raise OSError("disk full")
+        for error in (OSError("disk full"), KeyboardInterrupt()):
+            def write_partially(file, **kwargs):
+                file.write(b"<FileZilla3>")
+                raise error
 
-        with mock.patch.object(self.sitemanager.tree, "write", side_effect=write_partially), \
-                self.assertRaises(OSError):
+            with self.subTest(error=type(error).__name__), \
+                    mock.patch.object(self.sitemanager.tree, "write", side_effect=write_partially), \
+                    self.assertRaises(type(error)):
+                self.sitemanager.save()
+
+            with open(self.path, encoding="utf-8") as f:
+                self.assertEqual(f.read(), _CLEANUP_XML)
+            self.assertFalse(os.path.exists(f"{self.path}.tmp"))
+
+    def test_interrupted_backup_leaves_no_partial_copy(self):
+        def copy_partially(src, dst):
+            _touch(dst, "<FileZilla3>")
+            raise KeyboardInterrupt
+
+        with mock.patch.object(sitemanager.shutil, "copy2", side_effect=copy_partially), \
+                self.assertRaises(KeyboardInterrupt):
             self.sitemanager.save()
 
+        self.assertEqual(os.listdir(self.tmp.name), ["sitemanager.xml"])
         with open(self.path, encoding="utf-8") as f:
             self.assertEqual(f.read(), _CLEANUP_XML)
-        self.assertFalse(os.path.exists(f"{self.path}.tmp"))
 
     @unittest.skipIf(sys.platform == "win32", "POSIX permissions")
     def test_save_keeps_the_mode_of_the_replaced_file(self):

@@ -90,13 +90,20 @@ class SiteManager:
         """
         Write the tree to the file, after copying the file to a timestamped backup next to it when it exists, and
         return the backup path, or None when the file did not exist. Raises OSError when the backup or the write
-        fails; the file is then unchanged.
+        fails; the file is then unchanged, as after a KeyboardInterrupt, and no partial backup or temporary file is
+        left.
         """
         existed = os.path.exists(self.path)
         backup = None
         if existed:
             backup = self._backup_path()
-            shutil.copy2(self.path, backup)
+            try:
+                shutil.copy2(self.path, backup)
+            except BaseException:
+                # A partial copy, left by Ctrl+C or a full disk, must not pass for a backup.
+                if os.path.exists(backup):
+                    os.remove(backup)
+                raise
         else:
             directory = os.path.dirname(self.path)
             if directory:
@@ -114,7 +121,8 @@ class SiteManager:
             if existed and platform.system() != "Windows":
                 shutil.copymode(self.path, tmp)
             os.replace(tmp, self.path)
-        except OSError:
+        except BaseException:
+            # Ctrl+C included: the leftover, passwords and all, would otherwise stay next to sitemanager.xml.
             if os.path.exists(tmp):
                 os.remove(tmp)
             raise

@@ -137,6 +137,22 @@ class RunTest(unittest.TestCase):
 
         input_.assert_not_called()
 
+    def test_ctrl_c_exits_with_a_message_and_without_pause(self):
+        with mock.patch.object(app, "main", side_effect=KeyboardInterrupt), mock.patch("builtins.input") as input_, \
+                mock.patch("sys.stdout", new_callable=io.StringIO) as stdout:
+            self.assertEqual(app.run(), 130)
+
+        self.assertEqual(stdout.getvalue(), Console.paint(Console.WARNING, "\nInterrupted.") + "\n")
+        input_.assert_not_called()
+
+    def test_ctrl_c_at_the_pause_keeps_the_failure_code(self):
+        with mock.patch.object(app, "main", return_value=1), \
+                mock.patch("builtins.input", side_effect=KeyboardInterrupt), \
+                mock.patch("sys.stdout", new_callable=io.StringIO) as stdout:
+            self.assertEqual(app.run(), 1)
+
+        self.assertEqual(stdout.getvalue(), "\n")
+
 
 if __name__ == "__main__":
     unittest.main()
