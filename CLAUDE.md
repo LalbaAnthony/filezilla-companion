@@ -82,7 +82,7 @@ Single process, linear flow in `main()` (`src/filezilla_companion/__main__.py`):
 Commands:
 
 - `ConnectCommand` (`--connect`): checks `ssh.find_ssh()` + `ssh_is_functional()` (runs `ssh -V`), then `select_server()`, `Server.defaulting()`, rejects the server if `is_ftp` or not `can_connect`, then `ssh.connect()`. `ssh.connect()` copies the password (a `ClipboardError` is only a warning), then calls `terminal.open_in_terminal(Server.command)`:
-  - Windows: `cmd /k <command>` via `subprocess.Popen` (new console window).
+  - Windows: `cmd /k <command>` via `subprocess.Popen` with `CREATE_NEW_CONSOLE` (new console window; a new Windows Terminal window or tab when WT is the default terminal).
   - POSIX with `DISPLAY` or `WAYLAND_DISPLAY` set and a known emulator on PATH: `<terminal> sh -c '<command>; exec "${SHELL:-/bin/sh}"'`, detached with `start_new_session=True`. Emulator preference order is `terminal._POSIX_TERMINALS`.
   - POSIX otherwise: `subprocess.run(command, shell=True)` in the current terminal (blocks until ssh exits).
 - `CopyPasswordCommand` (`--copy-password`): menu limited to servers with a password, FTP included, no `defaulting()`. No such server, or a `ClipboardError`, is an error (exit 1).
@@ -121,7 +121,7 @@ Checks a command needs (e.g. a working `ssh`) belong in its `run()`; only the si
 Run a single test:
 
 ```sh
-python -m unittest tests.test_terminal.OpenInTerminalTest.test_windows_opens_cmd
+python -m unittest tests.test_terminal.OpenInTerminalTest.test_windows_opens_cmd_in_its_own_console
 python -m unittest tests.commands.test_connect
 python -m unittest -k test_prefers_legacy_dir_over_xdg
 ```
@@ -154,5 +154,6 @@ External dependencies: an OpenSSH client for `connect` (PATH first; on Windows a
 - Protocol handling: `parse_sitemanager()` defaults a missing `<Protocol>` to `0` (FTP) and `<Port>` to `22`. `Server.defaulting()` treats any falsy field as missing, so protocol `0` becomes `1` (SFTP). After that, `is_ftp` is true only for port 21 or a host containing `"ftp."`, which also matches `sftp.` hosts. Only `connect` calls `defaulting()`.
 - `Server` invariants are enforced with `assert`, which `python -O` strips.
 - The clipboard copy happens before the session launch on purpose: the POSIX no-GUI fallback blocks until ssh exits.
+- On Windows, `cmd` must get its own console (`terminal._CREATE_NEW_CONSOLE`). A plain `Popen` attaches it to the caller's console: the app exits, the calling shell shows its prompt again, and the shell and ssh both read the keyboard, so a pasted password lands at the shell prompt (and in its history if Enter is pressed). The flag is a hardcoded value because `subprocess.CREATE_NEW_CONSOLE` does not exist outside Windows, where CI also runs the Windows branch.
 - `Console.setup()` must run before any output. It enables colorama's ANSI conversion only on Windows; forcing it elsewhere strips all colors. argparse output (`--help`, usage errors) is printed before it, uncolored.
 - No macOS-specific handling: `Darwin` takes the Linux code paths (Linux config paths, Linux terminal list).

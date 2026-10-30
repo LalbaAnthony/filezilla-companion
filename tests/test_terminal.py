@@ -1,5 +1,7 @@
 import io
 import os
+import subprocess
+import sys
 import unittest
 from unittest import mock
 
@@ -24,13 +26,20 @@ class OpenInTerminalTest(unittest.TestCase):
         p.start()
         self.addCleanup(p.stop)
 
-    def test_windows_opens_cmd(self):
+    def test_windows_opens_cmd_in_its_own_console(self):
         self._platform("Windows")
         with mock.patch.object(terminal, "find_cmd", return_value=r"C:\Windows\System32\cmd.exe"):
             terminal.open_in_terminal(_COMMAND)
 
-        self.popen.assert_called_once_with([r"C:\Windows\System32\cmd.exe", "/k", _COMMAND])
+        self.popen.assert_called_once_with(
+            [r"C:\Windows\System32\cmd.exe", "/k", _COMMAND],
+            creationflags=terminal._CREATE_NEW_CONSOLE,
+        )
         self.run_.assert_not_called()
+
+    @unittest.skipUnless(sys.platform == "win32", "subprocess.CREATE_NEW_CONSOLE only exists on Windows")
+    def test_new_console_flag_matches_subprocess(self):
+        self.assertEqual(terminal._CREATE_NEW_CONSOLE, subprocess.CREATE_NEW_CONSOLE)
 
     def test_windows_without_cmd_raises(self):
         self._platform("Windows")

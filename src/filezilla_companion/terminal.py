@@ -6,6 +6,9 @@ import sys
 from typing import List, Optional
 from filezilla_companion.console import Console
 
+# Value of subprocess.CREATE_NEW_CONSOLE, which only exists on Windows while tests run the Windows branch on every OS.
+_CREATE_NEW_CONSOLE = 0x00000010
+
 # Ordered by preference, each entry is the argv prefix that runs the remaining args as a command.
 _POSIX_TERMINALS = [
     ["x-terminal-emulator", "-e"],  # Debian alternatives entry for the desktop's default terminal
@@ -45,7 +48,9 @@ def open_in_terminal(command: str) -> None:
         cmd = find_cmd()
         if not cmd:
             raise FileNotFoundError("cmd.exe not found.")
-        subprocess.Popen([cmd, "/k", command])
+        # Without its own console, cmd attaches to the caller's: once this process exits,
+        # the calling shell gets its prompt back and competes with ssh for keyboard input.
+        subprocess.Popen([cmd, "/k", command], creationflags=_CREATE_NEW_CONSOLE)
         return
 
     terminal = find_terminal()
