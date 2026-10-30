@@ -1,10 +1,9 @@
 from typing import Dict, List, Tuple
 from filezilla_companion import prompts
-from filezilla_companion.commands.base import Command, Context
+from filezilla_companion.commands.base import Command, Context, confirm_write
 from filezilla_companion.console import Console
 from filezilla_companion.criteria import CRITERIA
 from filezilla_companion.criteria.base import Action, Analysis, Criterion, Finding, Remove, Rename, site_label
-from filezilla_companion.filezilla import process
 from filezilla_companion.filezilla.server import Server
 
 Results = List[Tuple[Criterion, List[Finding]]]
@@ -34,7 +33,7 @@ class CleanCommand(Command):
             return 0
 
         _recap(results, removals, renames, dropped)
-        if not _confirm_write():
+        if not confirm_write():
             Console.info("sitemanager.xml left unchanged.")
             return 0
 
@@ -113,11 +112,3 @@ def _recap(results: Results, removals: List[Server], renames: List[Rename], drop
         for finding in findings:
             if finding.keep_one and all(id(srv) in removed for srv in finding.servers):
                 Console.warning(f"Every site of the group {finding.title} ({criterion.slug}) will be removed.")
-
-def _confirm_write() -> bool:
-    running = process.is_running()
-    if running:
-        Console.warning("FileZilla is running: its Site Manager may overwrite sitemanager.xml and undo these changes. Close it first.")
-    elif running is None:
-        Console.warning("Cannot tell whether FileZilla is running. If it is, close it first: its Site Manager may overwrite sitemanager.xml.")
-    return Console.confirm("Write the changes to sitemanager.xml?")

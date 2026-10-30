@@ -1,8 +1,10 @@
 import io
 import os
+import stat
 import sys
 import tempfile
 import unittest
+import xml.etree.ElementTree as ET
 from unittest import mock
 
 from filezilla_companion.filezilla import sitemanager
@@ -250,8 +252,8 @@ class SiteManagerTest(unittest.TestCase):
     def test_failed_write_leaves_the_file_unchanged(self):
         self.sitemanager.remove(self.sitemanager.servers)
 
-        def write_partially(path, **kwargs):
-            _touch(path, "<FileZilla3>")
+        def write_partially(file, **kwargs):
+            file.write(b"<FileZilla3>")
             raise OSError("disk full")
 
         with mock.patch.object(self.sitemanager.tree, "write", side_effect=write_partially), \
@@ -261,6 +263,168 @@ class SiteManagerTest(unittest.TestCase):
         with open(self.path, encoding="utf-8") as f:
             self.assertEqual(f.read(), _CLEANUP_XML)
         self.assertFalse(os.path.exists(f"{self.path}.tmp"))
+
+    @unittest.skipIf(sys.platform == "win32", "POSIX permissions")
+    def test_save_keeps_the_mode_of_the_replaced_file(self):
+        os.chmod(self.path, 0o640)
+
+        self.sitemanager.save()
+
+        self.assertEqual(stat.S_IMODE(os.stat(self.path).st_mode), 0o640)
+
+
+_TABBED_XML = """<?xml version="1.0" encoding="UTF-8"?>
+<FileZilla3>
+\t<Servers>
+\t\t<Folder expanded="1">clients
+\t\t\t<Server>
+\t\t\t\t<Host>acme.example</Host>
+\t\t\t\t<User>acme</User>
+\t\t\t\t<Pass encoding="crypt" pubkey="abc">xyz</Pass>
+\t\t\t\t<Name>acme</Name>
+\t\t\t\t<Colour>2</Colour>
+\t\t\t\t<Keyfile>/keys/id</Keyfile>
+\t\t\t</Server>
+\t\t</Folder>
+\t</Servers>
+</FileZilla3>"""
+
+
+class AddUpdateTest(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.path = os.path.join(self.tmp.name, "sitemanager.xml")
+        stdout = mock.patch("sys.stdout", new_callable=io.StringIO)
+        stdout.start()
+        self.addCleanup(stdout.stop)
+        self.new = Server(
+            "new", "new.example", 2222, 1, "deploy", "s3cret", logontype=1,
+            comments="bitwarden-id: abc", remote_dir="1 0 3 var 3 www",
+        )
+
+    def _file(self) -> str:
+        with open(self.path, encoding="utf-8") as f:
+            return f.read()
+
+    def test_add_appends_the_site_at_the_top_level_indented_like_the_file(self):
+        _touch(self.path, _TABBED_XML)
+        sitemanager_ = sitemanager.load_sitemanager(self.path)
+
+        sitemanager_.add(self.new)
+        sitemanager_.save()
+
+        self.assertIs(sitemanager_.servers[-1], self.new)
+        self.assertIs(sitemanager_.tree.find("Servers/Server"), self.new.element)
+        self.assertEqual(self._file(), "\n".join([
+            "<?xml version='1.0' encoding='UTF-8'?>",
+            "<FileZilla3>",
+            "\t<Servers>",
+            *_TABBED_XML.splitlines()[3:13],  # the folder, unchanged
+            "\t\t<Server>",
+            "\t\t\t<Host>new.example</Host>",
+            "\t\t\t<Port>2222</Port>",
+            "\t\t\t<Protocol>1</Protocol>",
+            "\t\t\t<User>deploy</User>",
+            '\t\t\t<Pass encoding="base64">czNjcmV0</Pass>',
+            "\t\t\t<Logontype>1</Logontype>",
+            "\t\t\t<Name>new</Name>",
+            "\t\t\t<Comments>bitwarden-id: abc</Comments>",
+            "\t\t\t<RemoteDir>1 0 3 var 3 www</RemoteDir>",
+            "\t\t</Server>",
+            "\t</Servers>",
+            "</FileZilla3>",
+        ]))
+        self.assertEqual(sitemanager.load_sitemanager(self.path).servers[-1], self.new)
+
+    def test_add_creates_the_servers_element_of_an_unindented_file(self):
+        _touch(self.path, "<FileZilla3/>")
+        sitemanager_ = sitemanager.load_sitemanager(self.path)
+
+        sitemanager_.add(self.new)
+        sitemanager_.save()
+
+        self.assertEqual(sitemanager.load_sitemanager(self.path).servers, [self.new])
+        self.assertIn("<FileZilla3><Servers><Server><Host>new.example</Host>", self._file())
+
+    def test_update_sets_adds_and_removes_settings(self):
+        _touch(self.path, _TABBED_XML)
+        sitemanager_ = sitemanager.load_sitemanager(self.path)
+        [acme] = sitemanager_.servers
+
+        sitemanager_.update(acme, {"keyfile": None, "port": 2222, "password": "new"})
+
+        self.assertEqual((acme.keyfile, acme.port, acme.password), (None, 2222, "new"))
+        self.assertEqual(ET.tostring(acme.element, encoding="unicode"), "\n".join([
+            "<Server>",
+            "\t\t\t\t<Host>acme.example</Host>",
+            "\t\t\t\t<User>acme</User>",
+            '\t\t\t\t<Pass encoding="base64">bmV3</Pass>',
+            "\t\t\t\t<Name>acme</Name>",
+            "\t\t\t\t<Colour>2</Colour>",
+            "\t\t\t\t<Port>2222</Port>",
+            "\t\t\t</Server>",
+            "\t\t",
+        ]))
+
+    def test_save_creates_a_missing_file_and_folder_without_backup(self):
+        path = os.path.join(self.tmp.name, "FileZilla", "sitemanager.xml")
+        sitemanager_ = sitemanager.empty_sitemanager(path)
+        sitemanager_.add(Server("new", "new.example", 22, 1, "deploy"))
+
+        self.assertIsNone(sitemanager_.save())
+
+        with open(path, encoding="utf-8") as f:
+            self.assertEqual(f.read(), "\n".join([
+                "<?xml version='1.0' encoding='UTF-8'?>",
+                "<FileZilla3>",
+                "\t<Servers>",
+                "\t\t<Server>",
+                "\t\t\t<Host>new.example</Host>",
+                "\t\t\t<Port>22</Port>",
+                "\t\t\t<Protocol>1</Protocol>",
+                "\t\t\t<User>deploy</User>",
+                "\t\t\t<Name>new</Name>",
+                "\t\t</Server>",
+                "\t</Servers>",
+                "</FileZilla3>",
+            ]))
+        self.assertEqual(os.listdir(os.path.dirname(path)), ["sitemanager.xml"])
+
+    @unittest.skipIf(sys.platform == "win32", "POSIX permissions")
+    def test_save_creates_a_private_file(self):
+        sitemanager.empty_sitemanager(self.path).save()
+
+        self.assertEqual(stat.S_IMODE(os.stat(self.path).st_mode), 0o600)
+
+
+class RemoteDirTest(unittest.TestCase):
+    def setUp(self):
+        patch = mock.patch.object(sitemanager.platform, "system", return_value="Linux")
+        self.system = patch.start()
+        self.addCleanup(patch.stop)
+
+    def test_encodes_unix_paths(self):
+        for path, expected in (("/var/www/", "1 0 3 var 3 www"), ("/", "1 0"), ("/my dir//x", "1 0 6 my dir 1 x")):
+            with self.subTest(path=path):
+                self.assertEqual(sitemanager.encode_remote_dir(path), expected)
+
+    def test_counts_utf16_units_on_windows(self):
+        self.assertEqual(sitemanager.encode_remote_dir("/\U0001F600"), "1 0 1 \U0001F600")
+        self.system.return_value = "Windows"
+        self.assertEqual(sitemanager.encode_remote_dir("/\U0001F600"), "1 0 2 \U0001F600")
+
+    def test_decodes_unix_paths_only(self):
+        for value, expected in (
+            ("1 0 3 var 3 www", "/var/www"),
+            ("1 0", "/"),
+            ("1 0 6 my dir 1 x", "/my dir/x"),
+            ("3 2 C: 3 www", None),  # a DOS path
+            ("1 0 9 var", None),
+            ("1 0 x", None),
+        ):
+            with self.subTest(value=value):
+                self.assertEqual(sitemanager.decode_remote_dir(value), expected)
 
 
 if __name__ == "__main__":

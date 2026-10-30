@@ -1,12 +1,13 @@
 # FileZilla Companion
 
-FileZilla Companion is a smoll tool that enhances the user experience of FileZilla by providing quick access to the sites saved in the FileZilla site manager. Its main command lets users select a server and automatically opens a terminal window to connect via SSH, copying the password to the clipboard for convenience. It can also clean up the site manager by finding duplicated, broken or ambiguous sites.
+FileZilla Companion is a smoll tool that enhances the user experience of FileZilla by providing quick access to the sites saved in the FileZilla site manager. Its main command lets users select a server and automatically opens a terminal window to connect via SSH, copying the password to the clipboard for convenience. It can also clean up the site manager by finding duplicated, broken or ambiguous sites, and import FTP and SFTP sites from a Bitwarden vault.
 
 ## Requirements
 
 - Python 3.9+
 - An OpenSSH client (`ssh`)
-- FileZilla with at least one saved site
+- FileZilla with at least one saved site, except for the Bitwarden import
+- The [Bitwarden CLI](https://bitwarden.com/help/cli/) (`bw`) on PATH, only for the Bitwarden import
 
 ## Installation
 
@@ -60,14 +61,15 @@ filezilla-companion
 
 Without argument, a menu asks which command to run. Pass a command's flag to skip the menu:
 
-| Flag              | Command                                                                                                          |
-| ----------------- | ---------------------------------------------------------------------------------------------------------------- |
-| `--connect`       | Select a server, copy its password to the clipboard and open an SSH session to it in a new terminal window.      |
-| `--copy-password` | Select a server among those with a saved password (FTP servers included) and copy its password to the clipboard. |
-| `--list`          | Print every saved server as `name (user@host:port)`.                                                             |
-| `--clean`         | Find duplicated, broken or ambiguous sites and remove or rename the ones you confirm. See below.                 |
+| Flag                 | Command                                                                                                          |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `--connect`          | Select a server, copy its password to the clipboard and open an SSH session to it in a new terminal window.      |
+| `--copy-password`    | Select a server among those with a saved password (FTP servers included) and copy its password to the clipboard. |
+| `--list`             | Print every saved server as `name (user@host:port)`.                                                             |
+| `--clean`            | Find duplicated, broken or ambiguous sites and remove or rename the ones you confirm. See below.                 |
+| `--import-bitwarden` | Add the FTP and SFTP sites of your Bitwarden vault, or update the ones added before. See below.                  |
 
-`filezilla-companion --help` lists the available flags.
+`filezilla-companion --help` lists the available flags. Without `sitemanager.xml`, or without any valid site in it, the menu only offers the commands that work without saved sites, i.e. the Bitwarden import.
 
 ### Cleaning up the site manager
 
@@ -94,6 +96,35 @@ Close FileZilla before writing the changes: its Site Manager may overwrite `site
 On Debian, the SSH session opens in the desktop's default terminal (`x-terminal-emulator`), falling back to gnome-terminal, konsole, xfce4-terminal, then xterm. Without a graphical session (e.g. when logged in over SSH), it runs in the current terminal.
 
 FileZilla's `sitemanager.xml` is read from `%APPDATA%\FileZilla` on Windows. On Debian, it is looked up in `~/.filezilla`, then `$XDG_CONFIG_HOME/filezilla` (default `~/.config/filezilla`), then the Flatpak config directory.
+
+### Importing from Bitwarden
+
+`--import-bitwarden` adds the FTP and SFTP sites stored in your Bitwarden vault to the site manager, and updates the ones it added before. It never removes a site. It needs the Bitwarden CLI and an unlocked vault: run `bw login` once, then `bw unlock`, and set the `BW_SESSION` environment variable to the session key it prints. The command first syncs the vault; when that fails (e.g. offline), it warns and uses the CLI's local copy.
+
+Every Login item with an FTP or SFTP URI is imported:
+
+| Item                    | Site                                                                                                                                                                                                                                                                                                                                               |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| URI                     | The first URI with a `sftp://`, `ssh://`, `ftp://`, `ftps://` or `ftpes://` scheme gives the host, port and protocol: SFTP (port 22) for `sftp` and `ssh`, FTP over TLS if available (21) for `ftp`, implicit TLS (990) for `ftps`, explicit TLS (21) for `ftpes`. A port in the URI wins. Items without such a URI, like web logins, are ignored. |
+| URI path                | Default remote directory: `sftp://host/var/www` starts in `/var/www`. No path, or `/`, leaves it empty.                                                                                                                                                                                                                                            |
+| Name                    | Site name.                                                                                                                                                                                                                                                                                                                                         |
+| Username                | User. When empty, the user of the URI (`sftp://deploy@host`).                                                                                                                                                                                                                                                                                      |
+| Password                | Saved password, in base64 like FileZilla does: anyone who can read `sitemanager.xml` can read it.                                                                                                                                                                                                                                                  |
+| `protocol` custom field | Overrides the protocol of the URI scheme, with the same names, e.g. `ftpes` on an `ftp://` URI.                                                                                                                                                                                                                                                    |
+| `keyfile` custom field  | Path to a private key, for a key file logon (SFTP only). `~` and environment variables are expanded. A password is saved too.                                                                                                                                                                                                                      |
+
+Items without a username, without a password or key file, with a key file on an FTP site, or with an unknown `protocol` value are skipped with a warning.
+
+An imported site has a `bitwarden-id: <item id>` line in its comments, which links it to its item: the next imports update every site linked to an item, wherever it is in the site manager. An item without a linked site adopts the sites with the same host, user and port that are not linked to another imported item, adding the line to their comments, or else it is added at the top level of the site manager. Items without a linked site whose host, user and port are already covered by another item are skipped with a warning; when several such items compete, the oldest one wins. The settings that do not come from Bitwarden, like the local directory, the colour or the rest of the comments, are kept.
+
+The changes are listed in one checklist, all checked, with the old and new value of each changed setting (the password is only named). Nothing is written until you confirm. The previous file is then saved next to it as `sitemanager.<timestamp>.xml.bak`, or, without any `sitemanager.xml` yet, the file is created (on Debian, readable by you only).
+
+Keep in mind:
+
+- FileZilla does not keep a password under a key file logon: once it rewrites `sitemanager.xml`, the next import proposes to save the password again.
+- A password encrypted by FileZilla's master password cannot be compared: such a site always shows a password change, which saves the Bitwarden password in base64.
+- Bitwarden's master password re-prompt does not apply to the CLI: such items are imported like the others.
+- Close FileZilla before writing the changes, as with `--clean`.
 
 ## Tests
 

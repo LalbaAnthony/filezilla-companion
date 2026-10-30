@@ -44,6 +44,7 @@ class PromptsTest(unittest.TestCase):
                 "Copy a server password (--copy-password)",
                 "List servers (--list)",
                 "Clean up the site manager (--clean)",
+                "Import sites from Bitwarden (--import-bitwarden)",
             ],
         )
         self.assertEqual(self.fuzzy.call_args.kwargs["message"], "Select a command:")

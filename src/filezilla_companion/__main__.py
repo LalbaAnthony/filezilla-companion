@@ -6,7 +6,7 @@ from filezilla_companion import prompts
 from filezilla_companion.commands import COMMANDS
 from filezilla_companion.commands.base import Command, Context
 from filezilla_companion.console import Console
-from filezilla_companion.filezilla.sitemanager import get_sitemanager_path, load_sitemanager
+from filezilla_companion.filezilla.sitemanager import empty_sitemanager, get_sitemanager_path, load_sitemanager
 
 def parse_args(argv: Optional[List[str]] = None) -> Optional[Command]:
     """Return the command requested with a `--<slug>` flag, or None when the user must pick one."""
@@ -26,18 +26,24 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     sitemanager_path = get_sitemanager_path()
 
-    if not os.path.exists(sitemanager_path):
-        Console.error("FileZilla sitemanager.xml not found. Please ensure FileZilla is installed and has saved at least one site.")
-        return 1
+    if os.path.exists(sitemanager_path):
+        sitemanager = load_sitemanager(sitemanager_path)
+        problem = None if sitemanager.servers else "No valid server found in the FileZilla site manager."
+    else:
+        sitemanager = empty_sitemanager(sitemanager_path)
+        problem = "FileZilla sitemanager.xml not found. Please ensure FileZilla is installed and has saved at least one site."
 
-    sitemanager = load_sitemanager(sitemanager_path)
-
-    if not sitemanager.servers:
-        Console.error("No valid server found in the FileZilla site manager.")
-        return 1
-
+    available = COMMANDS if problem is None else [cmd for cmd in COMMANDS if not cmd.requires_servers]
     if command is None:
-        command = prompts.select_command(COMMANDS)
+        if not available:
+            Console.error(problem)
+            return 1
+        if problem is not None:
+            Console.warning(f"{problem} Only the commands that work without saved sites are offered.")
+        command = prompts.select_command(available)
+    elif command not in available:
+        Console.error(problem)
+        return 1
 
     return command.run(Context(sitemanager))
 
