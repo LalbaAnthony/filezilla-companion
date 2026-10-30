@@ -1,0 +1,22 @@
+[build-system]
+# 64+ is needed for PEP 660 editable installs (`pip install -e .`) without a setup.py.
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "filezilla-companion"
+version = "0.1.0"
+description = "Act on the sites saved in FileZilla's site manager: open SSH sessions, copy passwords, list servers."
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "InquirerPy",
+    "colorama",
+    "pyperclip",
+]
+
+[project.scripts]
+filezilla-companion = "filezilla_companion.__main__:run"
+
+[tool.setuptools.packages.find]
+where = ["src"]

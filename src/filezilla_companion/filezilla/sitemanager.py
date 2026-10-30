@@ -3,8 +3,8 @@ import os
 import platform
 import xml.etree.ElementTree as ET
 from typing import List
-from console import Console
-from server import Server
+from filezilla_companion.console import Console
+from filezilla_companion.filezilla.server import Server
 
 def get_sitemanager_path() -> str:
     """Determine FileZilla sitemanager.xml path for current OS."""

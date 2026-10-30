@@ -5,10 +5,8 @@ import tempfile
 import unittest
 from unittest import mock
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src"))
-
-import sitemanager  # noqa: E402
-from server import Server  # noqa: E402
+from filezilla_companion.filezilla import sitemanager
+from filezilla_companion.filezilla.server import Server
 
 
 def _touch(path: str, content: str = "<FileZilla3/>") -> None:
@@ -26,7 +24,7 @@ class GetSitemanagerPathTest(unittest.TestCase):
         self.env_patch = mock.patch.dict(os.environ, env)
         self.env_patch.start()
         os.environ.pop("XDG_CONFIG_HOME", None)
-        self.platform_patch = mock.patch("sitemanager.platform.system", return_value="Linux")
+        self.platform_patch = mock.patch.object(sitemanager.platform, "system", return_value="Linux")
         self.platform_patch.start()
 
     def tearDown(self):
@@ -36,7 +34,7 @@ class GetSitemanagerPathTest(unittest.TestCase):
 
     @unittest.skipUnless(sys.platform == "win32", "%VAR% expansion is only supported by ntpath")
     def test_windows_uses_appdata(self):
-        with mock.patch("sitemanager.platform.system", return_value="Windows"), \
+        with mock.patch.object(sitemanager.platform, "system", return_value="Windows"), \
                 mock.patch.dict(os.environ, {"APPDATA": r"C:\Users\me\AppData\Roaming"}):
             self.assertEqual(
                 sitemanager.get_sitemanager_path(),

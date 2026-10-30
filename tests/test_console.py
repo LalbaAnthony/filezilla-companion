@@ -1,13 +1,9 @@
 import io
-import os
-import sys
 import unittest
 from unittest import mock
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src"))
-
-from colorama import Fore, Style  # noqa: E402
-from console import Console  # noqa: E402
+from colorama import Fore, Style
+from filezilla_companion.console import Console
 
 
 class OutputTest(unittest.TestCase):

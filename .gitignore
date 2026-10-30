@@ -1,3 +1,6 @@
 __pycache__
 *.log
 .venv
+*.egg-info
+build
+dist
