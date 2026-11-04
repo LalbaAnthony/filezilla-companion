@@ -7,6 +7,7 @@ if TYPE_CHECKING:
     # Type-only imports: command modules import this one, so a runtime import would be circular.
     from filezilla_companion.commands.base import Command
     from filezilla_companion.criteria.base import Action, Criterion
+    from filezilla_companion.ssh_keys import PublicKey
 
 def _fuzzy_select(subject: str, choices: List[Dict[str, Any]]) -> Any:
     """Show a fuzzy search menu over the choices and return the value of the selected one."""
@@ -22,6 +23,24 @@ def _fuzzy_select(subject: str, choices: List[Dict[str, Any]]) -> Any:
 def select_server(servers: List[Server]) -> Server:
     """Prompt the user to select a server via a fuzzy search menu."""
     return _fuzzy_select("server", [{"name": srv.label, "value": srv} for srv in servers])
+
+def select_servers(servers: List[Server]) -> List[Server]:
+    """
+    Prompt the user to select servers via a fuzzy search menu. Without any toggled, `enter` selects the current line;
+    the result is empty when the search matches nothing.
+    """
+    # No validate: InquirerPy validates the toggled lines only, so it would refuse `enter` on the current line.
+    return inquirer.fuzzy(
+        message="Select the servers:",
+        instruction="(type to search, `tab` to toggle and `enter` to confirm)",
+        choices=[{"name": srv.label, "value": srv} for srv in servers],
+        multiselect=True,
+        max_height="100%"
+    ).execute()
+
+def select_key(keys: List["PublicKey"]) -> "PublicKey":
+    """Prompt the user to select a public key via a fuzzy search menu, the first one being preselected."""
+    return _fuzzy_select("public key", [{"name": key.label, "value": key} for key in keys])
 
 def select_command(commands: List["Command"]) -> "Command":
     """Prompt the user to select a command via a fuzzy search menu, the first one being preselected."""

@@ -105,6 +105,123 @@ class UntestableTest(unittest.TestCase):
         self._assert_untestable(_server(logontype=5, keyfile=path), "the key file is protected by a passphrase")
 
 
+class SftpLoginProblemTest(unittest.TestCase):
+    def setUp(self):
+        patch = mock.patch.object(auth.socket, "create_connection")
+        self.create_connection = patch.start()
+        self.addCleanup(patch.stop)
+
+    def tearDown(self):
+        self.create_connection.assert_not_called()
+
+    def test_site_with_a_saved_password(self):
+        self.assertIsNone(auth.sftp_login_problem(_server()))
+
+    def test_site_with_a_readable_key(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = _write_key(tmp, serialization.NoEncryption())
+
+            self.assertIsNone(auth.sftp_login_problem(_server(logontype=5, password=None, keyfile=path)))
+
+    def test_ftp_site(self):
+        self.assertEqual(auth.sftp_login_problem(_server(protocol=0, port=21)), "protocol 0 is not SFTP")
+
+    def test_site_without_usable_credentials(self):
+        self.assertEqual(auth.sftp_login_problem(_server(password=None)), "no password saved")
+        self.assertEqual(auth.sftp_login_problem(_server(logontype=5, keyfile="gone")), "key file not found")
+
+
+class SftpSessionTest(unittest.TestCase):
+    def setUp(self):
+        patches = [
+            mock.patch.object(auth.socket, "create_connection"),
+            mock.patch.object(auth.paramiko, "Transport"),
+            mock.patch.object(auth.paramiko, "SFTPClient"),
+        ]
+        _, transport_class, self.sftp_client = [p.start() for p in patches]
+        for p in patches:
+            self.addCleanup(p.stop)
+        self.transport = transport_class.return_value
+        self.transport.is_authenticated.return_value = True
+
+    def test_yields_a_client_with_a_timeout_and_disconnects(self):
+        client = self.sftp_client.from_transport.return_value
+
+        with auth.sftp_session(_server(), 7.0) as sftp:
+            self.assertIs(sftp, client)
+            self.transport.close.assert_not_called()
+
+        self.transport.auth_password.assert_called_once_with("deploy", "secret")
+        self.sftp_client.from_transport.assert_called_once_with(self.transport)
+        client.get_channel.return_value.settimeout.assert_called_once_with(7.0)
+        self.assertEqual(self.transport.channel_timeout, 7.0)
+        self.transport.close.assert_called_once()
+
+    def test_disconnects_when_the_caller_fails(self):
+        with self.assertRaises(RuntimeError), auth.sftp_session(_server(), 7.0):
+            raise RuntimeError("boom")
+
+        self.transport.close.assert_called_once()
+
+    def test_partial_authentication_opens_no_session(self):
+        self.transport.is_authenticated.return_value = False
+
+        with self.assertRaises(Exception) as raised, auth.sftp_session(_server(), 7.0):
+            self.fail("no session should start")
+
+        self.assertEqual(
+            auth.failure_result(raised.exception),
+            AuthResult(AuthStatus.REJECTED, "another authentication factor is required"),
+        )
+        self.sftp_client.from_transport.assert_not_called()
+        self.transport.close.assert_called_once()
+
+    def test_unusable_credentials_open_no_connection(self):
+        with self.assertRaises(auth.Untestable), auth.sftp_session(_server(password=None), 7.0):
+            self.fail("no session should start")
+
+        auth.socket.create_connection.assert_not_called()
+
+
+class CheckKeyTest(unittest.TestCase):
+    def setUp(self):
+        patches = [
+            mock.patch.object(auth.socket, "create_connection"),
+            mock.patch.object(auth.paramiko, "Transport"),
+        ]
+        self.create_connection, transport_class = [p.start() for p in patches]
+        for p in patches:
+            self.addCleanup(p.stop)
+        self.transport = transport_class.return_value
+        self.transport.is_authenticated.return_value = True
+        self.key = mock.Mock(spec=paramiko.PKey)
+
+    def test_logs_in_with_the_key_alone(self):
+        self.assertEqual(auth.check_key(_server(), self.key, 7.0), AuthResult(AuthStatus.OK))
+
+        self.transport.auth_publickey.assert_called_once_with("deploy", self.key)
+        self.transport.auth_password.assert_not_called()
+        self.transport.close.assert_called_once()
+
+    def test_partial_authentication_is_not_a_login(self):
+        self.transport.is_authenticated.return_value = False
+
+        self.assertEqual(
+            auth.check_key(_server(), self.key, 7.0),
+            AuthResult(AuthStatus.REJECTED, "another authentication factor is required"),
+        )
+
+    def test_maps_failures(self):
+        self.transport.auth_publickey.side_effect = paramiko.AuthenticationException("Authentication failed.")
+
+        self.assertEqual(auth.check_key(_server(), self.key, 7.0), AuthResult(AuthStatus.REJECTED))
+        self.transport.close.assert_called_once()
+
+        self.create_connection.side_effect = socket.timeout("timed out")
+
+        self.assertEqual(auth.check_key(_server(), self.key, 7.0), AuthResult(AuthStatus.TIMEOUT))
+
+
 class SftpTest(unittest.TestCase):
     def setUp(self):
         patches = [

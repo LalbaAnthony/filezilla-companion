@@ -1,6 +1,6 @@
 # FileZilla Companion
 
-FileZilla Companion is a smoll tool that enhances the user experience of FileZilla by providing quick access to the sites saved in the FileZilla site manager. Its main command lets users select a server and automatically opens a terminal window to connect via SSH, copying the password to the clipboard for convenience. It can also clean up the site manager by finding duplicated, broken or ambiguous sites, and import FTP and SFTP sites from a Bitwarden vault.
+FileZilla Companion is a smoll tool that enhances the user experience of FileZilla by providing quick access to the sites saved in the FileZilla site manager. Its main command lets users select a server and automatically opens a terminal window to connect via SSH, copying the password to the clipboard for convenience. It can also clean up the site manager by finding duplicated, broken or ambiguous sites, import FTP and SFTP sites from a Bitwarden vault, and deploy an SSH key to the servers of your choice.
 
 ## Requirements
 
@@ -65,6 +65,7 @@ Without argument, a menu asks which command to run. Pass a command's flag to ski
 | -------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | `--connect`          | Select a server, copy its password to the clipboard and open an SSH session to it in a new terminal window.      |
 | `--copy-password`    | Select a server among those with a saved password (FTP servers included) and copy its password to the clipboard. |
+| `--deploy-key`       | Add an SSH public key to the servers you select, then switch their sites to it. See below.                      |
 | `--list`             | Print every saved server as `name (user@host:port)`.                                                             |
 | `--clean`            | Find duplicated, broken or ambiguous sites and remove or rename the ones you confirm. See below.                 |
 | `--import-bitwarden` | Add the FTP and SFTP sites of your Bitwarden vault, or update the ones added before. See below.                  |
@@ -124,6 +125,29 @@ Keep in mind:
 - FileZilla does not keep a password under a key file logon: once it rewrites `sitemanager.xml`, the next import proposes to save the password again.
 - A password encrypted by FileZilla's master password cannot be compared: such a site always shows a password change, which saves the Bitwarden password in base64.
 - Bitwarden's master password re-prompt does not apply to the CLI: such items are imported like the others.
+- Close FileZilla before writing the changes, as with `--clean`.
+
+### Deploying an SSH key
+
+`--deploy-key` adds one of your public keys to `.ssh/authorized_keys` on the servers you select, logging in with what their sites save, then switches the sites where the key logs in to a key file logon.
+
+1. Select a key among the `.pub` files of `~/.ssh`. The first one proposed is `id_ed25519`, `id_ecdsa` or `id_rsa`, in that order; the other keys follow by algorithm (ed25519, ECDSA, RSA, others), the most recent first.
+2. Select the servers: type to search, `tab` to toggle a line, `enter` to confirm. Without any toggled line, `enter` selects the current one. Only the SFTP sites with a saved password or a readable key file are offered, except those already using this key.
+3. Confirm the selected servers. On each one, the key is added unless it is already there, then a login with the key alone is tested: up to 16 hosts at a time, one site at a time per host.
+4. Check the result of each site, then confirm the write. The sites where the login worked get the key file logon with the private key's path, and lose their saved password. Refusing leaves `sitemanager.xml` unchanged, with the key on the servers. The previous file is saved next to it as `sitemanager.<timestamp>.xml.bak`, password included.
+
+A site on which anything failed keeps its logon, and the command then exits with an error, after writing the changes of the other sites.
+
+Keep in mind:
+
+- The login test goes through paramiko, not FileZilla, so it does not prove that FileZilla accepts the key file: it was not verified that FileZilla can use an OpenSSH private key written directly in `sitemanager.xml`, and it may ask to convert it to a `.ppk`. Try with one site first; the backup restores the password.
+- After a failed login, the line that was added is removed, along with `.ssh` and `authorized_keys` if they were created by this run. A key that was already there is never removed. Removing a line replaces the file with a rename (OpenSSH's `posix-rename` extension): on a server without it, the file is left intact and the key stays, which the result says.
+- A key that cannot be tested (protected by a passphrase, unreadable by paramiko, without its private file, or whose private file belongs to another key) is still added, but no site switches to it.
+- A site already on a key file logon adds the new key by logging in with its current one. It then moves to the new key, and the previous key stays authorized on the server.
+- `.ssh` gets mode `0700` and `authorized_keys` `0600` only when created here. Existing modes are left alone: when they are too open, `sshd` refuses the key, the login test fails and the line is removed.
+- `authorized_keys` is looked up from the directory the SFTP session starts in. On a chrooted account or with a custom `AuthorizedKeysFile`, the login test fails and the line is removed.
+- SFTP host keys are not verified: the saved credentials go to whatever answers at the address, like the failed connection test of `--clean`.
+- Ctrl+C during the deployment stops at once: a server may keep a key that was added but not tested. `sitemanager.xml` is not changed.
 - Close FileZilla before writing the changes, as with `--clean`.
 
 ## Tests
